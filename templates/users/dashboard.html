@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Личный кабинет - DiaMed{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Боковая панель -->
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <div class="fs-1 mb-2">👤</div>
+                            <h5 class="mb-1">{{ user.get_full_name|default:user.username }}</h5>
+                            <p class="text-muted small mb-0">{{ user.email }}</p>
+                        </div>
+                        <hr>
+                        <nav class="nav flex-column">
+                            <a class="nav-link active" href="#">Мои записи</a>
+                            <a class="nav-link" href="{% url 'users:profile_edit' %}">
+                                Редактировать профиль
+                            </a>
+                            <a class="nav-link" href="{% url 'users:appointment_create' %}">
+                                Записаться на приём
+                            </a>
+                            <hr>
+                            <a class="nav-link text-danger" href="{% url 'users:logout' %}">
+                                Выйти
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="col-md-9">
+                <!-- Приветствие -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title mb-0">Добро пожаловать, {{ user.first_name|default:user.username }}!</h2>
+                    </div>
+                </div>
+
+                <!-- Мои записи -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Мои записи на приём</h3>
+
+                        {% if appointments %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Услуга</th>
+                                            <th>Дата</th>
+                                            <th>Время</th>
+                                            <th>Статус</th>
+                                            <th>Результат</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for appointment in appointments %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'services:detail' appointment.service.slug %}">
+                                                        {{ appointment.service.name }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ appointment.date|date:"d.m.Y" }}</td>
+                                                <td>{{ appointment.time|time:"H:i" }}</td>
+                                                <td>
+                                                    <span class="badge
+                                                        {% if appointment.status == 'pending' %}bg-warning
+                                                        {% elif appointment.status == 'confirmed' %}bg-success
+                                                        {% elif appointment.status == 'completed' %}bg-info
+                                                        {% else %}bg-danger{% endif %}">
+                                                        {% if appointment.status == 'pending' %}Ожидает
+                                                        {% elif appointment.status == 'confirmed' %}Подтверждена
+                                                        {% elif appointment.status == 'completed' %}Завершена
+                                                        {% else %}Отменена{% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if appointment.status == 'completed' and appointment.result %}
+                                                        <a href="#" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-file-earmark-medical"></i> Результат
+                                                        </a>
+                                                    {% elif appointment.status == 'completed' %}
+                                                        <span class="text-muted small">Ожидается</span>
+                                                    {% else %}
+                                                        <span class="text-muted">—</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'users:appointment_detail' appointment.pk %}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        Подробнее
+                                                    </a>
+                                                    {% if appointment.status in 'pending,confirmed' %}
+                                                        <a href="{% url 'users:appointment_cancel' appointment.pk %}"
+                                                           class="btn btn-sm btn-outline-danger"
+                                                           onclick="return confirm('Отменить запись?');">
+                                                            Отменить
+                                                        </a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div class="fs-1 mb-3 text-muted">📅</div>
+                                <p class="text-muted">У вас пока нет записей на приём.</p>
+                                <a href="{% url 'users:appointment_create' %}"
+                                   class="btn btn-primary">
+                                    Записаться на приём
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

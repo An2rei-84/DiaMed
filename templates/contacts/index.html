@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Контакты - DiaMed{% endblock %}
+
+{% block content %}
+    <!-- Hero секция -->
+    <section class="hero-section" style="padding: 40px 0;">
+        <div class="container">
+            <h1 class="fw-bold text-center">Контакты</h1>
+            <p class="text-center">Свяжитесь с нами любым удобным способом</p>
+        </div>
+    </section>
+
+    <!-- Контактная информация -->
+    <section class="py-5">
+        <div class="container">
+            {% if contacts %}
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h3 class="card-title mb-4">Контактная информация</h3>
+
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">📍</div>
+                                        <div>
+                                            <h6 class="mb-1">Адрес</h6>
+                                            <p class="text-muted mb-0">{{ contacts.address|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">📞</div>
+                                        <div>
+                                            <h6 class="mb-1">Телефон</h6>
+                                            <p class="text-muted mb-0">
+                                                <a href="tel:{{ contacts.phone }}" class="text-decoration-none">
+                                                    {{ contacts.phone }}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">✉️</div>
+                                        <div>
+                                            <h6 class="mb-1">Email</h6>
+                                            <p class="text-muted mb-0">
+                                                <a href="mailto:{{ contacts.email }}"
+                                                   class="text-decoration-none">
+                                                    {{ contacts.email }}
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">🕐</div>
+                                        <div>
+                                            <h6 class="mb-1">Время работы</h6>
+                                            <p class="text-muted mb-0">{{ contacts.working_hours|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h3 class="card-title mb-4">Напишите нам</h3>
+                                <form method="post" action="{% url 'core:contact' %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Ваше имя</label>
+                                        <input type="text" class="form-control" id="name"
+                                               name="name" required placeholder="Введите ваше имя">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email"
+                                               name="email" required placeholder="email@example.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Сообщение</label>
+                                        <textarea class="form-control" id="message"
+                                                  name="message" rows="5" required
+                                                  placeholder="Ваше сообщение..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        Отправить сообщение
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Карта -->
+                {% if contacts.map_embed %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-0">
+                                    <div class="ratio ratio-21x9">
+                                        {{ contacts.map_embed|safe }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Яндекс.Карты -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-0">
+                                    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3A3c5f6e3e8e2e4e2e4e2e4e2e4e2e4e2e4&amp;width=100%25&amp;height=400&amp;lang=ru_RU&amp;scroll=true"></script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <div class="fs-1 mb-3">📞</div>
+                    <h3>Контактная информация скоро появится</h3>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

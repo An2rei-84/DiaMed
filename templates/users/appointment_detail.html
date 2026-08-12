@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Запись #{{ appointment.id }} - DiaMed{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <h2 class="card-title mb-0">Запись на приём</h2>
+                            <span class="badge
+                                {% if appointment.status == 'pending' %}bg-warning
+                                {% elif appointment.status == 'confirmed' %}bg-success
+                                {% elif appointment.status == 'completed' %}bg-info
+                                {% else %}bg-danger{% endif %}
+                                fs-6">
+                                {% if appointment.status == 'pending' %}Ожидает
+                                {% elif appointment.status == 'confirmed' %}Подтверждена
+                                {% elif appointment.status == 'completed' %}Завершена
+                                {% else %}Отменена{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Услуга</label>
+                                <div class="fw-bold">
+                                    <a href="{% url 'services:detail' appointment.service.slug %}">
+                                        {{ appointment.service.name }}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Стоимость</label>
+                                <div class="fw-bold text-primary">{{ appointment.service.price }} ₽</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Дата</label>
+                                <div>{{ appointment.date|date:"d.m.Y" }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Время</label>
+                                <div>{{ appointment.time|time:"H:i" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small">Дата создания</label>
+                            <div>{{ appointment.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+
+                        {% if appointment.notes %}
+                            <div class="mb-3">
+                                <label class="text-muted small">Примечания</label>
+                                <div>{{ appointment.notes }}</div>
+                            </div>
+                        {% endif %}
+
+                        {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
+                            <hr>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'users:dashboard' %}"
+                                   class="btn btn-outline-secondary">
+                                    Назад
+                                </a>
+                                <a href="{% url 'users:appointment_cancel' appointment.pk %}"
+                                   class="btn btn-outline-danger"
+                                   onclick="return confirm('Отменить запись?');">
+                                    Отменить запись
+                                </a>
+                            </div>
+                        {% else %}
+                            <hr>
+                            <a href="{% url 'users:dashboard' %}"
+                               class="btn btn-outline-secondary">
+                                Назад
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

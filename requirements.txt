@@ -1,0 +1,17 @@
+# Django 4.2 LTS
+Django==4.2.16
+
+# Драйвер PostgreSQL
+psycopg2-binary==2.9.9
+
+# WSGI сервер для продакшена
+gunicorn==21.2.0
+
+# Обработка изображений
+Pillow==10.4.0
+
+# Bootstrap 5 интеграция
+django-bootstrap5==23.4
+
+# Environment variables
+python-dotenv==1.0.0

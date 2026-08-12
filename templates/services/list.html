@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Услуги - DiaMed{% endblock %}
+
+{% block content %}
+    <!-- Hero секция -->
+    <section class="hero-section" style="padding: 40px 0;">
+        <div class="container">
+            <h1 class="fw-bold text-center">Наши услуги</h1>
+            <p class="text-center">
+                Комплексная медицинская диагностика для вашего здоровья
+            </p>
+        </div>
+    </section>
+
+    <!-- Фильтры -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <a href="{% url 'services:list' %}"
+                   class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Все услуги
+                </a>
+                {% for category in categories %}
+                    <a href="?category={{ category.slug }}"
+                       class="btn {% if current_category == category.slug %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ category.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Список услуг -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                {% for service in services %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm service-card">
+                            {% if service.image %}
+                                <img src="{{ service.image.url }}"
+                                     class="card-img-top"
+                                     alt="{{ service.name }}"
+                                     style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center"
+                                     style="height: 200px;">
+                                    <span class="fs-1 text-muted">🏥</span>
+                                </div>
+                            {% endif %}
+                            <div class="card-body">
+                                <span class="badge bg-secondary mb-2">
+                                    {{ service.category.name }}
+                                </span>
+                                <h5 class="card-title">{{ service.name }}</h5>
+                                <p class="card-text text-muted small">
+                                    {{ service.description|truncatewords:20 }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="fs-5 fw-bold text-primary">
+                                        {{ service.price }} ₽
+                                    </span>
+                                    {% if service.duration %}
+                                        <span class="text-muted small">
+                                            {{ service.duration }} мин
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-0">
+                                <a href="{% url 'services:detail' service.slug %}"
+                                   class="btn btn-primary w-100">
+                                    Подробнее
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center text-muted py-5">
+                        <div class="fs-1 mb-3">🏥</div>
+                        <h3>Услуги скоро появятся...</h3>
+                        <p>Мы работаем над наполнением каталога услуг.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Призыв к действию -->
+    <section class="py-5 bg-light">
+        <div class="container text-center">
+            <h2 class="mb-4">Готовы записаться на приём?</h2>
+            {% if user.is_authenticated %}
+                <a href="{% url 'users:appointment_create' %}"
+                   class="btn btn-primary btn-lg">
+                    Записаться на приём
+                </a>
+            {% else %}
+                <p class="text-muted mb-4">
+                    Для записи на приём необходимо авторизоваться
+                </p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'users:login' %}"
+                       class="btn btn-outline-primary btn-lg">
+                        Войти
+                    </a>
+                    <a href="{% url 'users:register' %}"
+                       class="btn btn-primary btn-lg">
+                        Зарегистрироваться
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Запись на приём - DiaMed{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="card-title mb-4">Запись на приём</h2>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="id_service" class="form-label">Услуга</label>
+                                <select class="form-select {% if form.service.errors %}is-invalid{% endif %}"
+                                        name="service"
+                                        id="id_service"
+                                        required>
+                                    <option value="">-- Выберите услугу --</option>
+                                    {% for service_id, service_name in form.service.field.choices %}
+                                        {% if service_id %}
+                                            <option value="{{ service_id }}"
+                                                    {% if form.service.value == service_id %}selected{% endif %}>
+                                                {{ service_name }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                {% if form.service.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.service.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_date" class="form-label">Дата</label>
+                                        <input type="date"
+                                               class="form-control {% if form.date.errors %}is-invalid{% endif %}"
+                                               name="date"
+                                               id="id_date"
+                                               value="{{ form.date.value|default:'' }}"
+                                               required>
+                                        {% if form.date.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.date.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_time" class="form-label">Время</label>
+                                        <input type="time"
+                                               class="form-control {% if form.time.errors %}is-invalid{% endif %}"
+                                               name="time"
+                                               id="id_time"
+                                               value="{{ form.time.value|default:'' }}"
+                                               required>
+                                        {% if form.time.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.time.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">Примечания</label>
+                                <textarea class="form-control {% if form.notes.errors %}is-invalid{% endif %}"
+                                          name="notes"
+                                          id="id_notes"
+                                          rows="3"
+                                          placeholder="Дополнительные пожелания">{{ form.notes.value|default:'' }}</textarea>
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    Записаться
+                                </button>
+                                <a href="{% url 'users:dashboard' %}"
+                                   class="btn btn-outline-secondary">
+                                    Отмена
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

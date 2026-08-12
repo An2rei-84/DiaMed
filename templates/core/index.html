@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DiaMed - Медицинская диагностика{% endblock %}
+
+{% block content %}
+    <!-- Hero секция -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-3">
+                        Современная медицинская диагностика
+                    </h1>
+                    <p class="lead mb-4">
+                        Профессиональные исследования, точные результаты,
+                        забота о вашем здоровье.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'services:list' %}"
+                           class="btn btn-light btn-lg">
+                            Наши услуги
+                        </a>
+                        <a href="{% url 'users:appointment_create' %}"
+                           class="btn btn-outline-light btn-lg">
+                            Записаться на приём
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <img src="{% static 'images/medical-hero.jpg' %}"
+                         alt="Медицинская диагностика"
+                         class="img-fluid rounded-3 shadow-lg"
+                         style="max-height: 400px; object-fit: cover;"
+                         onerror="this.style.display='none'">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- О компании -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">О DiaMed</h2>
+            <div class="row">
+                <div class="col-lg-6 mx-auto text-center">
+                    <p class="text-muted lead">
+                        DiaMed — это современный медицинский центр,
+                        специализирующийся на комплексной диагностике.
+                        Мы объединяем передовые технологии и опытных специалистов.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Наши услуги -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center section-title">Наши услуги</h2>
+            <div class="row g-4">
+                {% for service in services %}
+                    <div class="col-md-4">
+                        <div class="card service-card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="service-icon">🏥</div>
+                                <h5 class="card-title">{{ service.name }}</h5>
+                                <p class="card-text text-muted small">
+                                    {{ service.description|truncatewords:15 }}
+                                </p>
+                                <p class="card-text fw-bold text-primary">
+                                    от {{ service.price }} ₽
+                                </p>
+                                <a href="{% url 'services:detail' service.slug %}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Подробнее
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center text-muted">
+                        Услуги скоро появятся...
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'services:list' %}"
+                   class="btn btn-primary">
+                    Все услуги
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Преимущества -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">Почему выбирают нас</h2>
+            <div class="row g-4">
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 mb-3">✓</div>
+                    <h5>Точность</h5>
+                    <p class="text-muted small">
+                        Современное оборудование обеспечивает точность результатов
+                    </p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 mb-3">⚡</div>
+                    <h5>Скорость</h5>
+                    <p class="text-muted small">
+                        Результаты исследований в кратчайшие сроки
+                    </p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 mb-3">👨‍⚕️</div>
+                    <h5>Опыт</h5>
+                    <p class="text-muted small">
+                        Врачи с многолетним стажем работы
+                    </p>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="fs-1 mb-3">💚</div>
+                    <h5>Забота</h5>
+                    <p class="text-muted small">
+                        Индивидуальный подход к каждому пациенту
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Форма обратной связи -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center section-title">Свяжитесь с нами</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <form method="post" action="{% url 'core:contact' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Ваше имя</label>
+                            <input type="text" class="form-control" id="name"
+                                   name="name" required placeholder="Введите ваше имя">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email"
+                                   name="email" required placeholder="email@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Сообщение</label>
+                            <textarea class="form-control" id="message"
+                                      name="message" rows="5" required
+                                      placeholder="Ваше сообщение..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Отправить сообщение
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

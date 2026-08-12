@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}О нас - DiaMed{% endblock %}
+
+{% block content %}
+    <!-- Hero секция -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="display-4 fw-bold text-center">О компании DiaMed</h1>
+            <p class="text-center lead">
+                Ваше надежное партнерство в мире медицинской диагностики
+            </p>
+        </div>
+    </section>
+
+    <!-- История компании -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">История компании</h2>
+            <div class="row mt-4">
+                <div class="col-lg-8 mx-auto">
+                    <div class="timeline">
+                        {% for history in histories %}
+                            <div class="card mb-3 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <span class="badge bg-primary fs-5">
+                                                {{ history.year }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h5 class="card-title">{{ history.title }}</h5>
+                                            <p class="card-text text-muted">
+                                                {{ history.description }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted">
+                                История компании скоро появится...
+                            </p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Миссия и ценности -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center section-title">Наши ценности</h2>
+            <div class="row g-4 mt-2">
+                {% for value in values %}
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="fs-1 mb-3">{{ value.icon|default:"💎" }}</div>
+                                <h5 class="card-title">{{ value.title }}</h5>
+                                <p class="card-text text-muted">
+                                    {{ value.description }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center text-muted">
+                        Ценности компании скоро появятся...
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Команда -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">Наша команда</h2>
+            <p class="text-center text-muted mb-5">
+                Experienced professionals dedicated to your health
+            </p>
+            <div class="row g-4">
+                {% for member in team %}
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            {% if member.photo %}
+                                <img src="{{ member.photo.url }}"
+                                     class="card-img-top"
+                                     alt="{{ member.name }}"
+                                     style="height: 250px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center"
+                                     style="height: 250px;">
+                                    <span class="fs-1 text-muted">👤</span>
+                                </div>
+                            {% endif %}
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ member.name }}</h5>
+                                <p class="card-text text-primary fw-bold">
+                                    {{ member.position }}
+                                </p>
+                                <p class="card-text small text-muted">
+                                    {{ member.speciality }} • Стаж: {{ member.experience }} лет
+                                </p>
+                                {% if member.description %}
+                                    <p class="card-text text-muted small">
+                                        {{ member.description|truncatewords:20 }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center text-muted">
+                        Наша команда скоро появится...
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,108 @@
+[project]
+name = "DiaMed"
+version = "0.1.0"
+description = "Django проект для медицинского сервиса диагностики"
+authors = [
+    {name = "an2re"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "Django>=4.2.16,<5.0",
+    "psycopg2-binary>=2.9.9,<3.0",
+    "gunicorn>=21.2.0,<22.0",
+    "Pillow>=10.4.0,<11.0",
+    "django-bootstrap5>=23.4,<24.0",
+    "python-dotenv>=1.0.0,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=7.0.0",
+    "flake8-pyproject>=1.2.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "pytest>=8.0.0",
+    "pytest-django>=4.7.0",
+    "pytest-cov>=4.1.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.flake8]
+max-line-length = 129
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".eggs",
+    "*.egg",
+    "build",
+    "dist",
+    "migrations",
+    "staticfiles",
+    "static",
+    "media",
+]
+ignore = [
+    "E203",  # Whitespace before ':'
+    "W503",  # Line break before binary operator
+]
+per-file-ignores = [
+    "manage.py: E402",
+    "diamed/__init__.py: F401",
+    "diamed/settings_local.py: F403,F405",
+]
+max-complexity = 10
+docstring-convention = "pep257"
+
+
+[tool.black]
+line-length = 129
+target-version = ["py39", "py310", "py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.venv
+    | venv
+    | env
+    | migrations
+    | staticfiles
+    | static
+    | media
+)/
+'''
+
+
+[tool.isort]
+profile = "django"
+line_length = 129
+skip = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "migrations",
+    "staticfiles",
+    "static",
+    "media",
+]
+known_django = "django"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "diamed.settings"
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["apps"]
+addopts = [
+    "--cov=apps",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
