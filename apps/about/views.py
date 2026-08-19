@@ -1,7 +1,8 @@
 """Views для about приложения."""
 
 from django.shortcuts import render
-from .models import CompanyHistory, TeamMember, CompanyValue
+
+from .models import CompanyHistory, CompanyValue, TeamMember
 
 
 def about_index(request):
@@ -12,8 +13,8 @@ def about_index(request):
     values = CompanyValue.objects.all()
 
     context = {
-        'histories': histories,
-        'team': team,
-        'values': values,
+        "histories": histories,
+        "team": team,
+        "values": values,
     }
-    return render(request, 'about/index.html', context)
+    return render(request, "about/index.html", context)
