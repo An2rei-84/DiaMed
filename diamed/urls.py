@@ -1,17 +1,17 @@
 """Главный URL-роутер проекта DiaMed."""
 
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('apps.core.urls')),
-    path('about/', include('apps.about.urls')),
-    path('services/', include('apps.services.urls')),
-    path('contacts/', include('apps.contacts.urls')),
-    path('users/', include('apps.users.urls')),
+    path("admin/", admin.site.urls),
+    path("", include("apps.core.urls")),
+    path("about/", include("apps.about.urls")),
+    path("services/", include("apps.services.urls")),
+    path("contacts/", include("apps.contacts.urls")),
+    path("users/", include("apps.users.urls")),
 ]
 
 # Подключение медиа-файлов в режиме отладки

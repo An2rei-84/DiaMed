@@ -181,6 +181,80 @@ docker-compose exec web bash
 - Названия моделей в `CamelCase`
 - Названия полей в `snake_case`
 
+## Тестирование
+
+Проект включает полный набор тестов для всех модулей.
+
+### Запуск тестов
+
+
+```bash
+# Все тесты
+make test
+
+# С покрытием
+make test-cov
+
+# Конкретный тест
+make test-one module=core tests=TestCoreViews
+```
+
+### Структура тестов
+
+```
+apps/
+├── conftest.py           # Общие фикстуры
+├── core/tests.py         # Тесты core модуля
+├── about/tests.py        # Тесты about модуля
+├── services/tests.py    # Тесты services модуля
+├── contacts/tests.py    # Тесты contacts модуля
+└── users/tests.py       # Тесты users модуля
+```
+
+### Покрытие тестами
+
+| Модуль | Покрытие |
+|--------|----------|
+| core | ✅ Models, Views, Forms, URLs |
+| about | ✅ Models, Views, URLs |
+| services | ✅ Models, Views, URLs |
+| contacts | ✅ Models, Views, URLs |
+| users | ✅ Models, Views, Forms, URLs, Auth |
+
+## CI/CD
+
+Проект использует GitHub Actions для автоматической проверки и деплоя.
+
+### Workflow включает:
+
+1. **Линтинг** — проверка кода flake8, isort, black
+2. **Тестирование** — запуск тестов с pytest
+3. **Покрытие** — генерация отчета о покрытии
+4. **Сборка** — создание Docker образа
+5. **Деплой** — автоматический деплой на сервер
+
+### Pre-commit hooks
+
+Для локальной проверки перед коммитом:
+
+```bash
+# Установка
+make install
+
+# Хуки будут автоматически запускаться перед каждым коммитом
+```
+
+### Makefile команды
+
+```bash
+make help           # Все доступные команды
+make lint          # Проверить код
+make format        # Отформатировать код
+make test          # Запустить тесты
+make check         # Линтинг + тесты
+make clean         # Очистить временные файлы
+```
+
 ## Лицензия
 
 MIT License

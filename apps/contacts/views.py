@@ -1,6 +1,7 @@
 """Views для contacts приложения."""
 
 from django.shortcuts import render
+
 from .models import Contact
 
 
@@ -13,6 +14,6 @@ def contacts_index(request):
         contacts = None
 
     context = {
-        'contacts': contacts,
+        "contacts": contacts,
     }
-    return render(request, 'contacts/index.html', context)
+    return render(request, "contacts/index.html", context)
