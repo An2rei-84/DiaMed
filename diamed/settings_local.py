@@ -9,3 +9,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# В разработке и тестах задачи выполняются синхронно, без брокера
+CELERY_TASK_ALWAYS_EAGER = True
