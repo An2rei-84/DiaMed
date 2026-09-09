@@ -1,6 +1,8 @@
 """Тесты расчёта свободных слотов и эндпоинта available-slots."""
 
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
+
+from django.utils import timezone
 
 import pytest
 
@@ -8,6 +10,7 @@ from apps.api.services import get_available_slots
 from apps.users.models import Appointment
 
 SLOTS_URL = "/api/appointments/available-slots/"
+API_LIST = "/api/appointments/"
 
 
 @pytest.mark.django_db
@@ -32,6 +35,28 @@ class TestGetAvailableSlots:
 
         assert "10:00" not in slots
         assert "09:30" in slots
+
+    def test_past_slots_excluded_today(self, sample_service):
+        """Слоты, уже прошедшие сегодня, не предлагаются."""
+        today = timezone.localdate()
+        now = datetime.combine(today, time(10, 30))
+
+        slots = get_available_slots(sample_service, today, now=now)
+
+        assert slots[0] == "11:00"
+        assert "10:00" not in slots
+        assert "10:30" not in slots
+        assert "11:30" in slots
+
+    def test_tomorrow_slots_not_affected_by_now(self, sample_service):
+        """Фильтр прошедшего времени действует только на сегодняшнюю дату."""
+        tomorrow = timezone.localdate() + timedelta(days=1)
+        late_today = datetime.combine(timezone.localdate(), time(23, 59))
+
+        slots = get_available_slots(sample_service, tomorrow, now=late_today)
+
+        assert slots[0] == "08:00"
+        assert len(slots) == 24
 
     def test_cancelled_appointment_does_not_block(self, sample_service, user, tomorrow):
         """Отменённая запись не занимает слот."""
@@ -93,3 +118,17 @@ class TestAvailableSlotsAPI:
         assert response.data["service"] == "analiz-krovi"
         assert "10:00" not in response.data["available_slots"]
         assert "11:00" in response.data["available_slots"]
+
+    def test_create_for_past_time_today_rejected(self, auth_api_client, sample_service):
+        """Запись на сегодняшнее прошедшее время отклоняется API."""
+        now = timezone.localtime()
+        if now.time() < time(9, 0):
+            pytest.skip("тест запущен до 09:00 — прошедших слотов сегодня ещё нет")
+
+        response = auth_api_client.post(
+            API_LIST,
+            {"service": sample_service.pk, "date": str(timezone.localdate()), "time": "08:00"},
+            format="json",
+        )
+
+        assert response.status_code == 400

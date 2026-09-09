@@ -3,7 +3,7 @@
 [![CI/CD Pipeline](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Django](https://img.shields.io/badge/django-4.2_LTS-green)
-![Tests](https://img.shields.io/badge/tests-139_passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-147_passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 
 Полнофункциональный веб-сайт медицинского диагностического центра: каталог услуг, запись на приём
