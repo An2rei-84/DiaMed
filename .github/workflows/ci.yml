@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Установка Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -74,10 +74,10 @@ jobs:
 
     steps:
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Установка Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -96,7 +96,7 @@ jobs:
           pytest --cov=apps --cov-report=xml --cov-report=html --verbose
 
       - name: Загрузка отчета о покрытии в Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           file: ./coverage.xml
           flags: unittests
@@ -104,7 +104,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Загрузка HTML отчета о покрытии
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: htmlcov/
@@ -117,19 +117,19 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Настройка Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Вход в Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Сборка и публикация образа
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -150,17 +150,19 @@ jobs:
       url: https://diamed.example.com
     steps:
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Деплой через SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/diamed
-            docker-compose pull
-            docker-compose up -d
-            docker-compose exec -T web python manage.py migrate --noinput
-            docker-compose exec -T web python manage.py collectstatic --noinput
+            # Поддержка и нового (docker compose v2), и старого (docker-compose v1)
+            if docker compose version >/dev/null 2>&1; then DC="docker compose"; else DC="docker-compose"; fi
+            $DC pull
+            $DC up -d
+            $DC exec -T web python manage.py migrate --noinput
+            $DC exec -T web python manage.py collectstatic --noinput
