@@ -147,7 +147,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://diamed.example.com
+      url: http://144.124.249.130:8001
     steps:
       - name: Checkout кода
         uses: actions/checkout@v6
