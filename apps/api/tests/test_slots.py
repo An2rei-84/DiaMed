@@ -2,9 +2,9 @@
 
 from datetime import date, datetime, time, timedelta
 
-import pytest
-
 from django.utils import timezone
+
+import pytest
 
 from apps.api.services import get_available_slots
 from apps.users.models import Appointment
