@@ -1,264 +1,173 @@
-# DiaMed - Сайт медицинской диагностики
+# DiaMed — сайт медицинского диагностического центра
 
-Современный веб-сайт для компании медицинской диагностики с личным кабинетом пациентов и административной панелью
+[![CI/CD Pipeline](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Django](https://img.shields.io/badge/django-4.2_LTS-green)
+![Tests](https://img.shields.io/badge/tests-139_passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 
-## Описание проекта
+Полнофункциональный веб-сайт медицинского диагностического центра: каталог услуг, запись на приём
+с проверкой свободных слотов, личный кабинет пациента с результатами диагностики, REST API
+с JWT-аутентификацией и асинхронные email-уведомления на Celery.
 
-DiaMed — это полноценный веб-сайт для медицинского диагностического центра, включающий:
+## Возможности
 
-- 📄 Главная страница с информацией о компании и услугах
-- 👨‍⚕️ Раздел "О компании" с историей и командой врачей
-- 🏥 Каталог медицинских услуг с ценами
-- 📞 Контактная информация и карта проезда
-- 👤 Личный кабинет пациента с записью на приём и результатами
-- 🔐 Админ-панель для управления контентом
+- 🏥 **Каталог услуг** — категории, цены, длительность, подготовка к процедурам
+- 📅 **Запись на приём** — через сайт и REST API, с проверкой занятости слотов (8:00–20:00, шаг 30 мин)
+- 👤 **Личный кабинет** — записи, статусы, результаты диагностики
+- 🔌 **REST API** — DRF + JWT, фильтры, поиск, пагинация, rate limiting
+- 📚 **Документация API** — Swagger UI и ReDoc по OpenAPI-схеме (drf-spectacular)
+- ✉️ **Уведомления** — письмо-подтверждение при записи и напоминания за день (Celery + Celery Beat)
+- ⚡ **Кэширование** — Redis для списка услуг
+- 🔐 **Админ-панель** — управление услугами, записями, результатами и контентом
+- ✅ **139 тестов, покрытие 99%**, CI/CD с автодеплоем Docker-образа
 
-## Технологии
+## Стек
 
-- **Backend**: Django 4.2 LTS
-- **Frontend**: Bootstrap 5
-- **Database**: PostgreSQL 15
-- **Containers**: Docker & Docker Compose
-- **WSGI Server**: Gunicorn
+| Слой | Технологии |
+|------|-----------|
+| Backend | Python 3.11, Django 4.2 LTS, Django REST Framework, SimpleJWT, django-filter |
+| API-документация | drf-spectacular (OpenAPI 3, Swagger UI, ReDoc) |
+| Асинхронность | Celery 5, Celery Beat, Redis 7 (брокер и кэш) |
+| База данных | PostgreSQL 15 (SQLite для локальной разработки) |
+| Инфраструктура | Docker, Docker Compose, Gunicorn, WhiteNoise |
+| Качество | pytest, pytest-cov, factory-boy, flake8, black, isort, pre-commit |
+| CI/CD | GitHub Actions (линтинг → тесты → сборка → деплой) |
 
-## Структура проекта
+## Архитектура
 
+```mermaid
+flowchart LR
+    B[Браузер] --> G[Gunicorn]
+    G --> D[Django]
+    D --> T[Шаблоны / Bootstrap 5]
+    D --> A[REST API /api/]
+    A --> JWT[JWT-аутентификация]
+    D --> PG[(PostgreSQL)]
+    D --> R[(Redis<br/>кэш)]
+    D -->|задачи| RQ[[Redis<br/>брокер]]
+    RQ --> W[Celery Worker]
+    BE[Celery Beat] -->|расписание| RQ
+    W --> SMTP[Email]
 ```
-DiaMed/
-├── diamed/                 # Главный проект Django
-│   ├── settings.py         # Настройки
-│   ├── settings_local.py   # Локальные настройки (SQLite)
-│   ├── urls.py             # Главный роутер
-│   ├── wsgi.py             # WSGI конфигурация
-│   └── asgi.py             # ASGI конфигурация
-├── apps/
-│   ├── core/               # Главная страница, форма связи
-│   ├── about/              # О компании (история, команда, ценности)
-│   ├── services/           # Услуги и категории
-│   ├── contacts/           # Контакты с Яндекс.Картами
-│   └── users/              # Личный кабинет, авторизация, результаты
-├── static/                 # Статические файлы
-├── templates/              # HTML шаблоны
-├── media/                  # Медиа файлы
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
 
-## Установка и запуск
-
-### Требования
-
-- Docker
-- Docker Compose
-
-### Запуск через Docker (рекомендуется)
-
-1. **Клонируйте репозиторий**
-   ```bash
-   git clone <repository-url>
-   cd DiaMed
-   ```
-
-2. **Создайте файл `.env`**
-   ```bash
-   cp .env.example .env
-   ```
-   При необходимости измените настройки в `.env`.
-
-3. **Запустите контейнеры**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Создайте суперпользователя** (в новом терминале)
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
-
-5. **Откройте сайт**
-   - Сайт: http://localhost:8000
-   - Админка: http://localhost:8000/admin
-
-### Полезные команды Docker
+## Быстрый старт (Docker)
 
 ```bash
-# Остановка контейнеров
-docker-compose down
-
-# Перезапуск контейнеров
-docker-compose restart
-
-# Просмотр логов
-docker-compose logs -f web
-
-# Выполнение миграций
-docker-compose exec web python manage.py migrate
-
-# Создание суперпользователя
-docker-compose exec web python manage.py createsuperuser
-
-# Сбор статических файлов
-docker-compose exec web python manage.py collectstatic
-
-# Открыть shell в контейнере
-docker-compose exec web bash
+git clone https://github.com/An2rei-84/DiaMed.git
+cd DiaMed
+cp .env.example .env
+docker compose up --build
 ```
 
-## Разработка без Docker
+Сайт: http://localhost:8000 · Админка: http://localhost:8000/admin · Swagger: http://localhost:8000/api/docs/
 
-### Локальная установка
+Создание суперпользователя:
 
-1. **Создайте виртуальное окружение**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate     # Windows
-   # или
-   source .venv/bin/activate  # Linux/Mac
-   ```
+```bash
+docker compose exec web python manage.py createsuperuser
+```
 
-2. **Установите зависимости**
-   ```bash
-   pip install Django==4.2.16 django-bootstrap5 python-dotenv Pillow
-   ```
+## Локальный запуск без Docker
 
-3. **Запуск с SQLite (без PostgreSQL)**
-   ```bash
-   python manage.py migrate --settings=diamed.settings_local
-   python manage.py createsuperuser --settings=diamed.settings_local
-   python manage.py runserver --settings=diamed.settings_local
-   ```
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate --settings=diamed.settings_local
+python manage.py runserver --settings=diamed.settings_local
+```
 
-4. **Запуск с PostgreSQL**
-   - Установите PostgreSQL
-   - Создайте базу данных `diamed`
-   - Запустите миграции и сервер как обычно
+`settings_local.py` использует SQLite и выполняет Celery-задачи синхронно — PostgreSQL и Redis
+для разработки не нужны.
 
-## Использование
+## REST API
 
-### Личный кабинет
+Документация: `/api/docs/` (Swagger UI), `/api/redoc/`, схема: `/api/schema/`.
 
-1. Зарегистрируйтесь на сайте или войдите в существующий аккаунт
-2. Заполните профиль в личном кабинете
-3. Запишитесь на приём через форму
-4. Просматривайте историю записей и результаты диагностики
+| Метод | Эндпоинт | Описание | Доступ |
+|-------|----------|----------|--------|
+| POST | `/api/auth/token/` | Получение JWT (access + refresh) | публичный |
+| POST | `/api/auth/token/refresh/` | Обновление access-токена | публичный |
+| GET | `/api/categories/` | Категории услуг | публичный |
+| GET | `/api/services/` | Услуги: фильтры, поиск, сортировка | публичный |
+| GET | `/api/services/{slug}/` | Детали услуги | публичный |
+| GET | `/api/appointments/available-slots/` | Свободные слоты (`?service=&date=`) | публичный |
+| GET | `/api/appointments/` | Свои записи | JWT |
+| POST | `/api/appointments/` | Создание записи (проверка слота) | JWT |
+| GET | `/api/appointments/{id}/` | Детали записи с результатом | JWT, владелец |
+| POST | `/api/appointments/{id}/cancel/` | Отмена записи | JWT, владелец |
+| GET | `/api/appointments/{id}/result/` | Результат диагностики | JWT, владелец |
 
-### Админ-панель
+## Переменные окружения
 
-1. Войдите в админку через `/admin`
-2. **Управление пользователями** — редактирование профилей
-3. **Управление услугами** — создание категорий и услуг
-4. **Управление записями** — изменение статусов, добавление результатов
-5. **Управление контентом** — история компании, команда, контакты
+| Переменная | По умолчанию | Описание |
+|------------|--------------|----------|
+| `SECRET_KEY` | — | Ключ Django (обязателен в продакшене) |
+| `DEBUG` | `True` | Режим отладки |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Домены через запятую |
+| `CSRF_TRUSTED_ORIGINS` | — | Источники для CSRF (`https://example.com`) |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `diamed` / `diamed` / `diamed123` | Подключение к PostgreSQL |
+| `POSTGRES_HOST` / `POSTGRES_PORT` | `localhost` / `5432` | Хост и порт PostgreSQL |
+| `REDIS_URL` | `redis://localhost:6379/0` | Брокер Celery и кэш |
+| `USE_REDIS_CACHE` | `False` | Включить Redis как кэш Django |
+| `EMAIL_BACKEND` | `console` | `console` (вывод в консоль) или `smtp` |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | — | Параметры SMTP |
+| `DIAMED_IMAGE` | — | Образ для серверного деплоя (только на сервере) |
 
 ## Модели данных
 
-### Core
-- `ContactForm` — Сообщения из формы обратной связи
-
-### About
-- `CompanyHistory` — История компании
-- `TeamMember` — Сотрудники (врачи)
-- `CompanyValue` — Ценности компании
-
-### Services
-- `ServiceCategory` — Категории медицинских услуг
-- `Service` — Медицинские услуги с ценами и описаниями
-
-### Contacts
-- `Contact` — Контактная информация (адрес, телефоны, карта)
-
-### Users
-- `UserProfile` — Профиль пользователя
-- `Appointment` — Записи на приём
-- `DiagnosticResult` — Результаты диагностики (заключения, рекомендации)
-
-## Код стандарты
-
-- Код соответствует **PEP 8**
-- Доктрины моделей краткие и на **русском**
-- Названия моделей в `CamelCase`
-- Названия полей в `snake_case`
+| Приложение | Модели |
+|------------|--------|
+| `core` | `ContactForm` — сообщения формы обратной связи |
+| `about` | `CompanyHistory`, `TeamMember`, `CompanyValue` |
+| `services` | `ServiceCategory`, `Service` |
+| `contacts` | `Contact` |
+| `users` | `UserProfile`, `Appointment` (записи на приём), `DiagnosticResult` |
 
 ## Тестирование
 
-Проект включает полный набор тестов для всех модулей.
-
-### Запуск тестов
-
+139 тестов, покрытие кода 99%.
 
 ```bash
-# Все тесты
-make test
-
-# С покрытием
-make test-cov
-
-# Конкретный тест
-make test-one module=core tests=TestCoreViews
+make test          # все тесты
+make test-cov      # тесты с отчётом покрытия
+make test-one module=api tests=TestServiceAPI   # конкретный набор
 ```
 
-### Структура тестов
+Структура тестов:
 
 ```
 apps/
-├── conftest.py           # Общие фикстуры
-├── core/tests.py         # Тесты core модуля
-├── about/tests.py        # Тесты about модуля
-├── services/tests.py    # Тесты services модуля
-├── contacts/tests.py    # Тесты contacts модуля
-└── users/tests.py       # Тесты users модуля
+├── conftest.py               # Общие фикстуры
+├── core/tests.py             # Главная страница, форма связи
+├── about/tests.py            # О компании
+├── services/tests.py         # Услуги
+├── contacts/tests.py         # Контакты
+├── users/
+│   ├── tests.py              # Личный кабинет, авторизация
+│   └── test_tasks.py         # Celery-задачи
+└── api/tests/                # REST API: услуги, записи, слоты, JWT
 ```
-
-### Покрытие тестами
-
-| Модуль | Покрытие |
-|--------|----------|
-| core | ✅ Models, Views, Forms, URLs |
-| about | ✅ Models, Views, URLs |
-| services | ✅ Models, Views, URLs |
-| contacts | ✅ Models, Views, URLs |
-| users | ✅ Models, Views, Forms, URLs, Auth |
 
 ## CI/CD
 
-Проект использует GitHub Actions для автоматической проверки и деплоя.
+GitHub Actions: **линтинг** (flake8, isort, black) → **тесты** (pytest + PostgreSQL, отчёт
+покрытия в Codecov) → **сборка** Docker-образа и публикация в Docker Hub (push в `main`) →
+**деплой** на сервер по SSH (`docker compose pull && up -d`, миграции, сбор статики).
 
-### Workflow включает:
-
-1. **Линтинг** — проверка кода flake8, isort, black
-2. **Тестирование** — запуск тестов с pytest
-3. **Покрытие** — генерация отчета о покрытии
-4. **Сборка** — создание Docker образа
-5. **Деплой** — автоматический деплой на сервер
-
-### Pre-commit hooks
-
-Для локальной проверки перед коммитом:
+Pre-commit хуки для локальной проверки:
 
 ```bash
-# Установка
-make install
-
-# Хуки будут автоматически запускаться перед каждым коммитом
+make install            # установка hooks
+pre-commit run --all-files
 ```
 
-### Makefile команды
+## Деплой на сервер
 
-```bash
-make help           # Все доступные команды
-make lint          # Проверить код
-make format        # Отформатировать код
-make test          # Запустить тесты
-make check         # Линтинг + тесты
-make clean         # Очистить временные файлы
-```
+Образ публикуется в Docker Hub (`<username>/diamed:latest`). На сервере используется
+`docker-compose.prod.yml` (db, redis, web, celery, celery-beat) — см. `docs/CI_CD.md`.
 
 ## Лицензия
 
 MIT License
-
-## Поддержка
-
-Для вопросов и предложений создайте issue в репозитории.

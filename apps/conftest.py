@@ -1,5 +1,7 @@
 """Общие фикстуры для тестов проекта."""
 
+from datetime import date, timedelta
+
 from django.contrib.auth.models import User
 
 import pytest
@@ -15,6 +17,12 @@ def user_data():
         "email": "test@example.com",
         "password": "testpass123",
     }
+
+
+@pytest.fixture
+def tomorrow():
+    """Дата приёма для тестов: завтра."""
+    return date.today() + timedelta(days=1)
 
 
 @pytest.fixture

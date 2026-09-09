@@ -18,6 +18,15 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: diamed_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
     container_name: diamed_web
@@ -38,12 +47,58 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       POSTGRES_DB: diamed
       POSTGRES_USER: diamed
       POSTGRES_PASSWORD: diamed123
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      USE_REDIS_CACHE: "True"
+
+  celery:
+    build: .
+    container_name: diamed_celery
+    command: celery -A diamed worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: diamed
+      POSTGRES_USER: diamed
+      POSTGRES_PASSWORD: diamed123
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+
+  celery-beat:
+    build: .
+    container_name: diamed_celery_beat
+    command: celery -A diamed beat -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: diamed
+      POSTGRES_USER: diamed
+      POSTGRES_PASSWORD: diamed123
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
 
 volumes:
   postgres_data:

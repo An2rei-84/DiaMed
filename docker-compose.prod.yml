@@ -1,0 +1,95 @@
+# Серверный compose-файл: запускает готовый образ из Docker Hub.
+# Скопируйте этот файл на сервер как /var/www/diamed/docker-compose.yml
+# и положите рядом .env (шаблон — .env.example, там нужен DIAMED_IMAGE).
+
+x-web-env: &web-env
+  POSTGRES_HOST: db
+  POSTGRES_PORT: 5432
+  REDIS_URL: redis://redis:6379/0
+  USE_REDIS_CACHE: "True"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: diamed_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-diamed}
+      POSTGRES_USER: ${POSTGRES_USER:-diamed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diamed123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-diamed}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Порт 5432 наружу не публикуем: база доступна только внутри сети compose
+
+  redis:
+    image: redis:7-alpine
+    container_name: diamed_redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ${DIAMED_IMAGE:?set DIAMED_IMAGE in .env}
+    container_name: diamed_web
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn diamed.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      <<: *web-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery:
+    image: ${DIAMED_IMAGE:?set DIAMED_IMAGE in .env}
+    container_name: diamed_celery
+    restart: unless-stopped
+    command: celery -A diamed worker -l info
+    env_file:
+      - .env
+    environment:
+      <<: *web-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    image: ${DIAMED_IMAGE:?set DIAMED_IMAGE in .env}
+    container_name: diamed_celery_beat
+    restart: unless-stopped
+    command: celery -A diamed beat -l info
+    env_file:
+      - .env
+    environment:
+      <<: *web-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
