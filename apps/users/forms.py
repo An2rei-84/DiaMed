@@ -87,6 +87,24 @@ class AppointmentForm(forms.ModelForm):
             raise forms.ValidationError("Нельзя записаться на прошедшую дату.")
         return appointment_date
 
+    def clean(self):
+        """Проверка что выбранный слот свободен, в рабочих часах и не прошёл."""
+        cleaned_data = super().clean()
+        service = cleaned_data.get("service")
+        appointment_time = cleaned_data.get("time")
+        appointment_date = cleaned_data.get("date")
+
+        if service and appointment_time and appointment_date:
+            from apps.users.services import get_available_slots
+
+            slots = get_available_slots(service, appointment_date)
+            if appointment_time.strftime("%H:%M") not in slots:
+                self.add_error(
+                    "time",
+                    "Это время уже прошло, занято или вне рабочих часов (8:00-20:00).",
+                )
+        return cleaned_data
+
     class Meta:
         """Настройки формы."""
 
