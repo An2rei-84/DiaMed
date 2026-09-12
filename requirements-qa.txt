@@ -7,3 +7,4 @@ playwright==1.62.0
 
 # API-тесты как чёрный ящик (HTTP-клиент)
 requests==2.34.2
+schemathesis==4.27.0

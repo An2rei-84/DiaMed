@@ -195,7 +195,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ),
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "user": "120/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        # Через env поднимается для фаззинга Schemathesis, чтобы не упираться в лимиты
+        "anon": os.environ.get("API_ANON_THROTTLE_RATE", "60/min"),
+        "user": os.environ.get("API_USER_THROTTLE_RATE", "120/min"),
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
