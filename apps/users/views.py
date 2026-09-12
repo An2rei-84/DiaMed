@@ -1,5 +1,6 @@
 """Views для users приложения."""
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -74,9 +75,14 @@ def dashboard(request):
     except UserProfile.DoesNotExist:
         profile = UserProfile.objects.create(user=request.user)
 
+    # Код привязки Telegram (создаётся при первом заходе в кабинет)
+    telegram_code = profile.ensure_telegram_link_code()
+
     context = {
         "appointments": appointments,
         "profile": profile,
+        "telegram_code": telegram_code,
+        "telegram_bot_username": settings.TELEGRAM_BOT_USERNAME,
     }
     return render(request, "users/dashboard.html", context)
 

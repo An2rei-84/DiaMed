@@ -29,6 +29,23 @@
                                 Выйти
                             </a>
                         </nav>
+                        <hr>
+                        <!-- Уведомления Telegram -->
+                        <div class="small">
+                            {% if profile.telegram_chat_id %}
+                                <span class="text-success">
+                                    <i class="bi bi-telegram"></i> Telegram подключён
+                                </span>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="bi bi-telegram"></i> <strong>Подключить Telegram</strong>
+                                </span>
+                                <p class="mb-1 mt-2">Отправьте боту
+                                    <a href="https://t.me/{{ telegram_bot_username }}">@{{ telegram_bot_username }}</a>
+                                    команду:</p>
+                                <code>/start {{ telegram_code }}</code>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -270,3 +270,11 @@ if os.environ.get("EMAIL_BACKEND", "console") == "smtp":
     EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# ==================== Telegram ====================
+
+# Токен бота от @BotFather; без токена отправка отключена (задачи молча пропускают TG)
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+# Имя бота для показа ссылки привязки в личном кабинете
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "diamed_bot")

@@ -1,5 +1,7 @@
 """Модели users приложения."""
 
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -11,6 +13,8 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True, verbose_name="Телефон")
     date_of_birth = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
     address = models.TextField(blank=True, verbose_name="Адрес")
+    telegram_chat_id = models.BigIntegerField(blank=True, null=True, verbose_name="Telegram chat ID")
+    telegram_link_code = models.CharField(max_length=32, blank=True, unique=True, verbose_name="Код привязки Telegram")
 
     class Meta:
         """Настройки модели."""
@@ -21,6 +25,13 @@ class UserProfile(models.Model):
     def __str__(self):
         """Строковое представление."""
         return f"Профиль: {self.user.get_full_name() or self.user.username}"
+
+    def ensure_telegram_link_code(self):
+        """Возвращает код привязки, создавая его при первом обращении."""
+        if not self.telegram_link_code:
+            self.telegram_link_code = uuid.uuid4().hex
+            self.save(update_fields=("telegram_link_code",))
+        return self.telegram_link_code
 
 
 class Appointment(models.Model):
