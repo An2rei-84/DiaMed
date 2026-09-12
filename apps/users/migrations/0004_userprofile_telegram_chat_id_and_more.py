@@ -17,6 +17,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="userprofile",
             name="telegram_link_code",
-            field=models.CharField(blank=True, max_length=32, unique=True, verbose_name="Код привязки Telegram"),
+            # unique=True включается миграцией 0006 после заполнения кодов (0005),
+            # иначе существующие профили с пустой строкой нарушат UNIQUE
+            field=models.CharField(blank=True, max_length=32, null=True, verbose_name="Код привязки Telegram"),
         ),
     ]

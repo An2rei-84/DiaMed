@@ -21,6 +21,10 @@ def register(request):
         if form.is_valid():
             try:
                 user = form.save()
+            except IntegrityError:
+                # Гонка при регистрации: username заняли между валидацией и save
+                form.add_error("username", "Пользователь с таким именем уже существует.")
+            else:
                 # Создаем профиль
                 UserProfile.objects.create(user=user)
                 username = form.cleaned_data.get("username")
@@ -29,8 +33,6 @@ def register(request):
                 login(request, user)
                 messages.success(request, "Регистрация успешна! Добро пожаловать.")
                 return redirect("core:index")
-            except IntegrityError:
-                form.add_error("username", "Пользователь с таким именем уже существует.")
     else:
         form = UserRegisterForm()
 

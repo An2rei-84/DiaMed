@@ -14,7 +14,10 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
     address = models.TextField(blank=True, verbose_name="Адрес")
     telegram_chat_id = models.BigIntegerField(blank=True, null=True, verbose_name="Telegram chat ID")
-    telegram_link_code = models.CharField(max_length=32, blank=True, unique=True, verbose_name="Код привязки Telegram")
+    # null вместо "" у уникального поля: много профилей без кода не нарушают UNIQUE
+    telegram_link_code = models.CharField(
+        max_length=32, blank=True, null=True, unique=True, verbose_name="Код привязки Telegram"
+    )
 
     class Meta:
         """Настройки модели."""

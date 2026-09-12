@@ -194,3 +194,30 @@ class TestDashboardTelegramLink:
         assert profile.telegram_link_code
         assert response.context["telegram_code"] == profile.telegram_link_code
         assert response.context["telegram_bot_username"]
+
+
+@pytest.mark.django_db
+class TestRegistrationWithLinkCode:
+    """Регрессия: уникальный код привязки не должен ломать массовую регистрацию."""
+
+    def _register(self, username):
+        """Регистрирует пользователя через веб-форму (отдельный клиент)."""
+        from django.test import Client
+
+        data = {
+            "username": username,
+            "first_name": "Иван",
+            "last_name": "Тестов",
+            "email": f"{username}@example.com",
+            "password1": "e2ePass_123",
+            "password2": "e2ePass_123",
+        }
+        return Client().post(reverse("users:register"), data)
+
+    def test_two_registrations_in_a_row(self, db):
+        """Вторая регистрация подряд не падает из-за UNIQUE кода привязки у профилей."""
+        assert self._register("reg_first").status_code == 302
+        assert self._register("reg_second").status_code == 302
+
+        codes = list(UserProfile.objects.exclude(telegram_link_code__isnull=True).values_list("telegram_link_code", flat=True))
+        assert len(codes) == len(set(codes)), "Коды привязки у профилей не уникальны"
