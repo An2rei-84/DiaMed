@@ -410,6 +410,23 @@ class TestUsersForms:
         form = UserRegisterForm(data)
         assert not form.is_valid()
 
+    def test_register_form_duplicate_email_rejected(self, user):
+        """Email уже занят (регистр не важен) — форма не проходит."""
+        from apps.users.forms import UserRegisterForm
+
+        data = {
+            "username": "anotheruser",
+            "first_name": "Другой",
+            "last_name": "Пользователь",
+            "email": user.email.upper(),  # user_data: test@example.com → TEST@EXAMPLE.COM
+            "password1": "testpass123",
+            "password2": "testpass123",
+        }
+        form = UserRegisterForm(data)
+
+        assert not form.is_valid()
+        assert "email" in form.errors
+
     def test_appointment_form_valid(self, sample_service):
         """Тест валидной формы записи."""
         from apps.users.forms import AppointmentForm

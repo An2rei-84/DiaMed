@@ -31,6 +31,13 @@ class UserRegisterForm(UserCreationForm):
             "password2": forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Подтвердите пароль"}),
         }
 
+    def clean_email(self):
+        """Email должен быть уникальным (без учёта регистра)."""
+        email = self.cleaned_data.get("email")
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Пользователь с таким email уже зарегистрирован.")
+        return email
+
     def save(self, commit=True):
         """Сохранение пользователя."""
         user = super().save(commit=False)
