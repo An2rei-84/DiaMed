@@ -22,8 +22,12 @@ htmlcov/
 .pytest_cache/
 .tox/
 
-# E2E-прогоны (скриншоты, видео, логи сервера)
+# QA-прогоны: Allure и артефакты
 e2e-artifacts/
+api-tests-artifacts/
+allure-results/
+allure-report/
+e2e/output/
 
 # Linting/Formatting
 .flake8_cache/
