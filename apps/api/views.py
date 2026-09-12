@@ -19,11 +19,16 @@ from .permissions import IsOwner
 from .serializers import (
     AppointmentCreateSerializer,
     AppointmentSerializer,
+    AvailableSlotsSerializer,
     DiagnosticResultSerializer,
     ServiceCategorySerializer,
     ServiceSerializer,
 )
 from .services import get_available_slots
+
+# pk записи: в схеме объявлен целым числом, иначе drf-spectacular пишет "string",
+# фаззер генерирует нечисловой мусор и роутинг его отсекает
+ID_PATH_PARAM = OpenApiParameter(name="id", type=OpenApiTypes.INT, location=OpenApiParameter.PATH)
 
 
 class ServiceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -93,6 +98,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает только записи текущего пользователя."""
+        if getattr(self, "swagger_fake_view", False):
+            # Генерация OpenAPI-схемы: реального пользователя нет
+            return Appointment.objects.none()
         return Appointment.objects.filter(user=self.request.user).select_related("service").order_by("-date", "-time")
 
     def get_serializer_class(self):
@@ -101,6 +109,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AppointmentCreateSerializer
         return AppointmentSerializer
 
+    @extend_schema(parameters=[ID_PATH_PARAM])
+    def retrieve(self, request, *args, **kwargs):
+        """Детали записи."""
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(parameters=[ID_PATH_PARAM], responses=AppointmentSerializer)
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         """Отмена записи владельцем (только в статусе pending/confirmed)."""
@@ -114,6 +128,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment.save(update_fields=("status", "updated_at"))
         return Response(AppointmentSerializer(appointment).data)
 
+    @extend_schema(parameters=[ID_PATH_PARAM], responses=DiagnosticResultSerializer)
     @action(detail=True, methods=["get"])
     def result(self, request, pk=None):
         """Результат диагностики по записи."""
@@ -132,6 +147,13 @@ class AvailableSlotsView(APIView):
 
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name="service", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
+            OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY),
+        ],
+        responses=AvailableSlotsSerializer,
+    )
     def get(self, request):
         """Возвращает свободные слоты для услуги и даты.
 

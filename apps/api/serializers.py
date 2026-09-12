@@ -3,6 +3,7 @@
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.services.models import Service, ServiceCategory
@@ -46,6 +47,34 @@ class ServiceSerializer(serializers.ModelSerializer):
         ]
 
 
+class AvailableSlotsSerializer(serializers.Serializer):
+    """Свободные слоты для услуги на дату."""
+
+    service = serializers.CharField()
+    date = serializers.DateField()
+    available_slots = serializers.ListField(child=serializers.CharField())
+
+
+class DiagnosticResultSerializer(serializers.ModelSerializer):
+    """Результат диагностики (только чтение)."""
+
+    class Meta:
+        """Настройки сериализатора."""
+
+        model = DiagnosticResult
+        fields = [
+            "id",
+            "appointment",
+            "conclusion",
+            "recommendations",
+            "doctor",
+            "result_date",
+            "attachment",
+            "is_normal",
+        ]
+        read_only_fields = fields
+
+
 class AppointmentSerializer(serializers.ModelSerializer):
     """Запись на приём: чтение."""
 
@@ -72,6 +101,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    @extend_schema_field(DiagnosticResultSerializer(allow_null=True))
     def get_result(self, obj):
         """Возвращает результат диагностики, если он готов."""
         try:
@@ -148,23 +178,3 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"time": SLOT_TAKEN_MESSAGE})
         transaction.on_commit(lambda: send_appointment_confirmation.delay(appointment.pk))
         return appointment
-
-
-class DiagnosticResultSerializer(serializers.ModelSerializer):
-    """Результат диагностики (только чтение)."""
-
-    class Meta:
-        """Настройки сериализатора."""
-
-        model = DiagnosticResult
-        fields = [
-            "id",
-            "appointment",
-            "conclusion",
-            "recommendations",
-            "doctor",
-            "result_date",
-            "attachment",
-            "is_normal",
-        ]
-        read_only_fields = fields
