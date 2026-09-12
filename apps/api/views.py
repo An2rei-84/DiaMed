@@ -58,6 +58,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsOwner)
     http_method_names = ["get", "post", "head", "options"]
     ordering_fields = ["date", "time", "status"]
+    # pk — не более 18 цифр: значения вне диапазона bigint (2^63-1) отсекаются
+    # роутингом и дают 404, иначе DB-адаптер падает OverflowError/DataError → 500
+    lookup_value_regex = "[0-9]{1,18}"
 
     def get_queryset(self):
         """Возвращает только записи текущего пользователя."""
