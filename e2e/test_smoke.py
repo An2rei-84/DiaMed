@@ -12,6 +12,12 @@ class TestSmoke:
 
         assert "DiaMed" in page.title()
 
+    def test_favicon_link_present(self, page, base_url):
+        """Фавиконка подключена в head каждой страницы."""
+        page.goto(base_url + "/")
+
+        assert page.locator('link[rel="icon"]').count() >= 1
+
     def test_services_list_shows_seeded_service(self, page, base_url):
         """В списке услуг отображается услуга из демо-данных."""
         page.goto(base_url + "/services/")
