@@ -140,6 +140,7 @@ jobs:
 
       - name: Фаззинг Schemathesis по OpenAPI-схеме
         run: |
+          pipx install schemathesis
           python manage.py migrate --noinput
           python manage.py qa_seed
           python manage.py runserver 127.0.0.1:8039 --noreload &

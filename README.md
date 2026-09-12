@@ -168,9 +168,11 @@ pytest e2e --headed # то же, но с видимым браузером
 `python manage.py qa_seed` (услуги, тестовые пользователи, завершённая запись с результатом);
 фикстуры запускают её автоматически.
 
-Фаззинг OpenAPI-схемы Schemathesis (проверка, что API не падает на невалидных данных):
+Фаззинг OpenAPI-схемы Schemathesis (проверка, что API не падает на невалидных данных).
+Ставится изолированно через pipx: ему нужен pytest≥9, проект pinned на 7.x.
 
 ```bash
+pipx install schemathesis
 st run http://127.0.0.1:8000/api/schema/ --checks not_a_server_error --max-examples 20
 ```
 
