@@ -40,10 +40,15 @@
                                 <span class="text-muted">
                                     <i class="bi bi-telegram"></i> <strong>Подключить Telegram</strong>
                                 </span>
-                                <p class="mb-1 mt-2">Отправьте боту
+                                <p class="mb-1 mt-2">Нажмите — Telegram откроется с готовой командой:</p>
+                                <a class="btn btn-sm btn-primary mb-2"
+                                   href="https://t.me/{{ telegram_bot_username }}?start={{ telegram_code }}"
+                                   target="_blank" rel="noopener">
+                                    <i class="bi bi-telegram"></i> Подключить
+                                </a>
+                                <p class="text-muted mb-0">Или отправьте боту
                                     <a href="https://t.me/{{ telegram_bot_username }}">@{{ telegram_bot_username }}</a>
-                                    команду:</p>
-                                <code>/start {{ telegram_code }}</code>
+                                    вручную: <code>/start {{ telegram_code }}</code></p>
                             {% endif %}
                         </div>
                     </div>
