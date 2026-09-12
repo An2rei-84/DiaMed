@@ -2,6 +2,7 @@
 
 from datetime import date, time, timedelta
 
+from django.db import IntegrityError, transaction
 from django.urls import reverse
 
 import pytest
@@ -66,13 +67,46 @@ class TestAppointmentModel:
         assert "Анализ крови" in str_repr
 
     def test_appointment_status_choices(self, user, sample_service):
-        """Тест статусов записи."""
-        statuses = ["pending", "confirmed", "completed", "cancelled"]
-        for status in statuses:
+        """Тест статусов записи (у каждой — свой слот: активные не делят слот)."""
+        statuses = [
+            ("pending", time(10, 0)),
+            ("confirmed", time(10, 30)),
+            ("completed", time(11, 0)),
+            ("cancelled", time(11, 30)),
+        ]
+        for status, appointment_time in statuses:
             appointment = Appointment.objects.create(
-                user=user, service=sample_service, date=date.today() + timedelta(days=1), time=time(10, 0), status=status
+                user=user, service=sample_service, date=date.today() + timedelta(days=1), time=appointment_time, status=status
             )
             assert appointment.status == status
+
+    def test_double_active_booking_forbidden(self, user, sample_service, tomorrow):
+        """Две активные записи на один слот запрещены констрейнтом на уровне БД."""
+        Appointment.objects.create(user=user, service=sample_service, date=tomorrow, time=time(10, 0))
+
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                Appointment.objects.create(user=user, service=sample_service, date=tomorrow, time=time(10, 0))
+
+    def test_cancelled_slot_allows_rebooking(self, user, sample_service, tomorrow):
+        """Отменённая запись не мешает новой записи на тот же слот."""
+        cancelled = Appointment.objects.create(
+            user=user, service=sample_service, date=tomorrow, time=time(10, 0), status="cancelled"
+        )
+
+        rebooked = Appointment.objects.create(user=user, service=sample_service, date=tomorrow, time=time(10, 0))
+
+        assert rebooked.pk != cancelled.pk
+
+    def test_completed_slot_allows_rebooking(self, user, sample_service, tomorrow):
+        """Завершённая запись не мешает новой записи на тот же слот."""
+        completed = Appointment.objects.create(
+            user=user, service=sample_service, date=tomorrow, time=time(10, 0), status="completed"
+        )
+
+        rebooked = Appointment.objects.create(user=user, service=sample_service, date=tomorrow, time=time(10, 0))
+
+        assert rebooked.pk != completed.pk
 
     def test_appointment_ordering(self, user, sample_service):
         """Тест сортировки записей."""
@@ -287,6 +321,21 @@ class TestUsersViewsAppointments:
         data = {"service": sample_service.id, "date": yesterday.isoformat(), "time": "10:00", "notes": "Тестовая запись"}
         response = authenticated_client.post(reverse("users:appointment_create"), data)
         assert response.status_code == 200  # Stay on page with errors
+
+    def test_appointment_create_view_race_shows_error(self, authenticated_client, sample_service, tomorrow, monkeypatch):
+        """Гонка: слот заняли после проверки формы — страница с ошибкой, а не 500."""
+        from django.contrib.auth.models import User
+
+        other = User.objects.create_user(username="raceuser", email="race@example.com", password="racepass123")
+        Appointment.objects.create(user=other, service=sample_service, date=tomorrow, time=time(10, 0))
+        # Валидация «успела» пройти до появления брони: слот считался свободным
+        monkeypatch.setattr("apps.users.services.get_available_slots", lambda *args, **kwargs: ["10:00"])
+
+        data = {"service": sample_service.id, "date": tomorrow.isoformat(), "time": "10:00", "notes": ""}
+        response = authenticated_client.post(reverse("users:appointment_create"), data)
+
+        assert response.status_code == 200  # Stay on page with errors
+        assert "только что заняли" in str(response.context["form"].errors)
 
     def test_appointment_detail_view(self, authenticated_client, user, sample_service):
         """Тест детальной страницы записи."""

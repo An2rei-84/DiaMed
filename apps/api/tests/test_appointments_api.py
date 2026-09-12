@@ -86,6 +86,38 @@ class TestAppointmentCreateAPI:
 
 
 @pytest.mark.django_db
+class TestAppointmentRaceConditionAPI:
+    """Двойная запись при гонке: UniqueConstraint в БД + IntegrityError → 400."""
+
+    def test_slot_taken_between_validation_and_save(self, auth_api_client, other_user, sample_service, tomorrow, monkeypatch):
+        """Гонка: слот занял другой пациент после проверки — 400 с пояснением, не 500."""
+        Appointment.objects.create(user=other_user, service=sample_service, date=tomorrow, time=time(10, 0))
+        # Валидация «успела» пройти до появления брони: слот считался свободным
+        monkeypatch.setattr("apps.api.serializers.get_available_slots", lambda *args, **kwargs: ["10:00"])
+
+        response = auth_api_client.post(
+            API_LIST,
+            {"service": sample_service.pk, "date": str(tomorrow), "time": "10:00"},
+            format="json",
+        )
+
+        assert response.status_code == 400
+        assert "только что заняли" in str(response.data)
+
+    def test_rebooking_after_cancel_success(self, auth_api_client, user, sample_service, tomorrow):
+        """После отмены записи слот снова доступен (констрейнт учитывает только активные)."""
+        Appointment.objects.create(user=user, service=sample_service, date=tomorrow, time=time(10, 0), status="cancelled")
+
+        response = auth_api_client.post(
+            API_LIST,
+            {"service": sample_service.pk, "date": str(tomorrow), "time": "10:00"},
+            format="json",
+        )
+
+        assert response.status_code == 201
+
+
+@pytest.mark.django_db
 class TestAppointmentListDetailAPI:
     """Чтение записей через GET /api/appointments/."""
 

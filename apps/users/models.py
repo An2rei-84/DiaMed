@@ -48,6 +48,15 @@ class Appointment(models.Model):
         verbose_name = "Запись на приём"
         verbose_name_plural = "Записи на приём"
         ordering = ["-date", "-time"]
+        constraints = [
+            # Защита от двойной записи при гонке: одна активная бронь на слот.
+            # Валидация (сериализатор/форма) не атомарна, поэтому гарантию даёт БД
+            models.UniqueConstraint(
+                fields=["service", "date", "time"],
+                condition=models.Q(status__in=("pending", "confirmed")),
+                name="unique_active_booking_per_slot",
+            )
+        ]
 
     def __str__(self):
         """Строковое представление."""

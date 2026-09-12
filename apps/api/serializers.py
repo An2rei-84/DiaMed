@@ -1,6 +1,6 @@
 """Сериализаторы API."""
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -9,7 +9,7 @@ from apps.services.models import Service, ServiceCategory
 from apps.users.models import Appointment, DiagnosticResult
 from apps.users.tasks import send_appointment_confirmation
 
-from .services import get_available_slots
+from .services import SLOT_TAKEN_MESSAGE, get_available_slots
 
 
 class ServiceCategorySerializer(serializers.ModelSerializer):
@@ -88,6 +88,10 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
 
         model = Appointment
         fields = ["id", "service", "date", "time", "notes"]
+        # Отключаем автогенерацию UniqueTogetherValidator из констрейнта модели:
+        # занятость слота проверяет validate() с понятным сообщением, а гонку
+        # между проверкой и INSERT закрывает IntegrityError в create()
+        validators = []
 
     def validate_service(self, value):
         """Записаться можно только на активную услугу."""
@@ -112,7 +116,13 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Создаёт запись текущему пользователю и ставит отправку подтверждения."""
         validated_data["user"] = self.context["request"].user
-        appointment = super().create(validated_data)
+        try:
+            with transaction.atomic():
+                appointment = super().create(validated_data)
+        except IntegrityError:
+            # Слот заняли между проверкой validate() и INSERT (гонка) —
+            # гарантию даёт UniqueConstraint на уровне БД
+            raise serializers.ValidationError({"time": SLOT_TAKEN_MESSAGE})
         transaction.on_commit(lambda: send_appointment_confirmation.delay(appointment.pk))
         return appointment
 

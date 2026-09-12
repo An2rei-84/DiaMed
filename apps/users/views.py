@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AppointmentForm, UserLoginForm, UserProfileForm, UserRegisterForm
 from .models import Appointment, UserProfile
+from .services import SLOT_TAKEN_MESSAGE
 from .tasks import send_appointment_confirmation
 
 
@@ -110,10 +111,17 @@ def appointment_create(request):
         if form.is_valid():
             appointment = form.save(commit=False)
             appointment.user = request.user
-            appointment.save()
-            transaction.on_commit(lambda: send_appointment_confirmation.delay(appointment.pk))
-            messages.success(request, "Запись на приём создана! Ожидайте подтверждения.")
-            return redirect("users:dashboard")
+            try:
+                with transaction.atomic():
+                    appointment.save()
+            except IntegrityError:
+                # Слот заняли между проверкой формы и сохранением (гонка) —
+                # гарантию даёт UniqueConstraint на уровне БД
+                form.add_error("time", SLOT_TAKEN_MESSAGE)
+            else:
+                transaction.on_commit(lambda: send_appointment_confirmation.delay(appointment.pk))
+                messages.success(request, "Запись на приём создана! Ожидайте подтверждения.")
+                return redirect("users:dashboard")
     else:
         form = AppointmentForm()
 

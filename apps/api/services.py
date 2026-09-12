@@ -4,6 +4,6 @@
 для совместимости с существующими импортами API.
 """
 
-from apps.users.services import get_available_slots  # noqa: F401
+from apps.users.services import SLOT_TAKEN_MESSAGE, get_available_slots  # noqa: F401
 
-__all__ = ("get_available_slots",)
+__all__ = ("SLOT_TAKEN_MESSAGE", "get_available_slots")
