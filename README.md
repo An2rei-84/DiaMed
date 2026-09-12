@@ -3,24 +3,32 @@
 [![CI/CD Pipeline](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Django](https://img.shields.io/badge/django-4.2_LTS-green)
-![Tests](https://img.shields.io/badge/tests-147_passed-brightgreen)
+![Unit%2Fintegration](https://img.shields.io/badge/tests_unit-166_passed-brightgreen)
+![API](https://img.shields.io/badge/tests_API_black--box-35_passed-brightgreen)
+![E2E](https://img.shields.io/badge/tests_E2E_Playwright-15_passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 
 Полнофункциональный веб-сайт медицинского диагностического центра: каталог услуг, запись на приём
-с проверкой свободных слотов, личный кабинет пациента с результатами диагностики, REST API
-с JWT-аутентификацией и асинхронные email-уведомления на Celery.
+с проверкой свободных слотов и защитой от двойной брони на уровне БД, личный кабинет пациента
+с результатами диагностики, REST API с JWT-аутентификацией и асинхронные уведомления
+(Email + Telegram) на Celery. Проект покрыт тремя слоями автотестов: unit/integration (pytest),
+API black-box (requests) и E2E (Playwright) с Allure-отчётами в CI.
 
 ## Возможности
 
 - 🏥 **Каталог услуг** — категории, цены, длительность, подготовка к процедурам
-- 📅 **Запись на приём** — через сайт и REST API, с проверкой занятости слотов (8:00–20:00, шаг 30 мин)
+- 📅 **Запись на приём** — через сайт и REST API: проверка занятости слотов (8:00–20:00, шаг 30 мин),
+  защита от двойной записи частичным `UniqueConstraint` на уровне БД
 - 👤 **Личный кабинет** — записи, статусы, результаты диагностики
 - 🔌 **REST API** — DRF + JWT, фильтры, поиск, пагинация, rate limiting
 - 📚 **Документация API** — Swagger UI и ReDoc по OpenAPI-схеме (drf-spectacular)
-- ✉️ **Уведомления** — письмо-подтверждение при записи и напоминания за день (Celery + Celery Beat)
+- ✉️ **Уведомления** — письмо-подтверждение при записи и напоминания за день (Celery + Celery Beat);
+  для привязанных пользователей — дублирование в **Telegram**
+- 💬 **Telegram-бот** — привязка аккаунта по персональному коду (`/start <код>`) через long polling
 - ⚡ **Кэширование** — Redis для списка услуг
 - 🔐 **Админ-панель** — управление услугами, записями, результатами и контентом
-- ✅ **139 тестов, покрытие 99%**, CI/CD с автодеплоем Docker-образа
+- ✅ **Три слоя автотестов** — 166 unit/integration (покрытие 99%), 35 API black-box, 15 E2E;
+  фаззинг OpenAPI-схемы (Schemathesis); Allure-отчёты в CI/CD
 
 ## Стек
 
@@ -31,8 +39,12 @@
 | Асинхронность | Celery 5, Celery Beat, Redis 7 (брокер и кэш) |
 | База данных | PostgreSQL 15 (SQLite для локальной разработки) |
 | Инфраструктура | Docker, Docker Compose, Gunicorn, WhiteNoise |
-| Качество | pytest, pytest-cov, factory-boy, flake8, black, isort, pre-commit |
-| CI/CD | GitHub Actions (линтинг → тесты → сборка → деплой) |
+| Тесты: unit/integration | pytest, pytest-django, pytest-cov, factory-boy |
+| Тесты: API black-box | requests, Schemathesis (фаззинг OpenAPI) |
+| Тесты: E2E | Playwright (Chromium), Page Object Model |
+| Отчётность | Allure, pytest-cov |
+| Качество | flake8, black, isort, pre-commit |
+| CI/CD | GitHub Actions (линтинг → тесты → API black-box → E2E → сборка → деплой) |
 
 ## Архитектура
 
@@ -49,6 +61,8 @@ flowchart LR
     RQ --> W[Celery Worker]
     BE[Celery Beat] -->|расписание| RQ
     W --> SMTP[Email]
+    W --> TG[Telegram Bot API]
+    TB[manage.py telegram_bot<br/>long polling] --> TG
 ```
 
 ## Быстрый старт (Docker)
@@ -99,6 +113,16 @@ python manage.py runserver --settings=diamed.settings_local
 | POST | `/api/appointments/{id}/cancel/` | Отмена записи | JWT, владелец |
 | GET | `/api/appointments/{id}/result/` | Результат диагностики | JWT, владелец |
 
+## Telegram-уведомления
+
+1. Создайте бота у [@BotFather](https://t.me/BotFather) и получите токен.
+2. Задайте переменные окружения: `TELEGRAM_BOT_TOKEN=<токен>`, `TELEGRAM_BOT_USERNAME=<имя_бота>`.
+3. Запустите бота: `python manage.py telegram_bot` (long polling).
+4. В личном кабинете появится персональный код — отправьте боту `/start <код>`.
+
+После привязки подтверждения записей и напоминания дублируются в Telegram.
+Без `TELEGRAM_BOT_TOKEN` отправка отключена (письма работают как обычно).
+
 ## Переменные окружения
 
 | Переменная | По умолчанию | Описание |
@@ -113,6 +137,9 @@ python manage.py runserver --settings=diamed.settings_local
 | `USE_REDIS_CACHE` | `False` | Включить Redis как кэш Django |
 | `EMAIL_BACKEND` | `console` | `console` (вывод в консоль) или `smtp` |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | — | Параметры SMTP |
+| `TELEGRAM_BOT_TOKEN` | — | Токен бота от @BotFather (без него TG отключён) |
+| `TELEGRAM_BOT_USERNAME` | `diamed_bot` | Имя бота для ссылки привязки в кабинете |
+| `API_ANON_THROTTLE_RATE` / `API_USER_THROTTLE_RATE` | `60/min` / `120/min` | Лимиты запросов API |
 | `DIAMED_IMAGE` | — | Образ для серверного деплоя (только на сервере) |
 
 ## Модели данных
@@ -123,16 +150,28 @@ python manage.py runserver --settings=diamed.settings_local
 | `about` | `CompanyHistory`, `TeamMember`, `CompanyValue` |
 | `services` | `ServiceCategory`, `Service` |
 | `contacts` | `Contact` |
-| `users` | `UserProfile`, `Appointment` (записи на приём), `DiagnosticResult` |
+| `users` | `UserProfile` (вкл. привязку Telegram), `Appointment`, `DiagnosticResult` |
 
 ## Тестирование
 
-139 тестов, покрытие кода 99%.
+Три слоя автотестов + фаззинг: **166** unit/integration (покрытие 99%), **35** API black-box,
+**15** E2E в браузере. Артефакты CI: Allure-отчёты, скриншоты и видео падений E2E.
 
 ```bash
-make test          # все тесты
-make test-cov      # тесты с отчётом покрытия
-make test-one module=api tests=TestServiceAPI   # конкретный набор
+pytest              # unit/integration: модели, формы, views, API, задачи
+pytest api_tests    # API black-box: живой сервер поднимается фикстурой
+pytest e2e          # E2E Playwright: живой сервер + Chromium (headless)
+pytest e2e --headed # то же, но с видимым браузером
+```
+
+Демо-данные для QA-слоёв создаются идемпотентной командой
+`python manage.py qa_seed` (услуги, тестовые пользователи, завершённая запись с результатом);
+фикстуры запускают её автоматически.
+
+Фаззинг OpenAPI-схемы Schemathesis (проверка, что API не падает на невалидных данных):
+
+```bash
+st run http://127.0.0.1:8000/api/schema/ --checks not_a_server_error --max-examples 20
 ```
 
 Структура тестов:
@@ -145,16 +184,21 @@ apps/
 ├── services/tests.py         # Услуги
 ├── contacts/tests.py         # Контакты
 ├── users/
-│   ├── tests.py              # Личный кабинет, авторизация
+│   ├── tests.py              # Личный кабинет, авторизация, модели
+│   ├── test_appointment_form.py  # Слоты в форме записи
+│   ├── test_telegram.py      # Telegram: отправка, привязка, задачи
 │   └── test_tasks.py         # Celery-задачи
 └── api/tests/                # REST API: услуги, записи, слоты, JWT
+e2e/                          # E2E Playwright: POM (pages/), смок, авторизация, запись
+api_tests/                    # API black-box: JWT, каталог, записи, отмена, результаты
 ```
 
 ## CI/CD
 
-GitHub Actions: **линтинг** (flake8, isort, black) → **тесты** (pytest + PostgreSQL, отчёт
-покрытия в Codecov) → **сборка** Docker-образа и публикация в Docker Hub (push в `main`) →
-**деплой** на сервер по SSH (`docker compose pull && up -d`, миграции, сбор статики).
+GitHub Actions: **линтинг** (flake8, isort, black) → **тесты** (pytest + PostgreSQL, покрытие
+в Codecov) → **API black-box + Schemathesis** (фаззинг схемы) → **E2E Playwright** → сборка
+Docker-образа и публикация в Docker Hub (push в `main`) → деплой на сервер по SSH.
+Allure-отчёты API/E2E и артефакты падений выкладываются в каждой джобе.
 
 Pre-commit хуки для локальной проверки:
 
