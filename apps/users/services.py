@@ -14,6 +14,10 @@ SLOT_STEP = timedelta(minutes=30)
 # Статусы записи, при которых время считается занятым
 BUSY_STATUSES = ("pending", "confirmed")
 
+# Сообщение, когда слот заняли между проверкой и сохранением (гонка);
+# ловится через IntegrityError — см. UniqueConstraint в Appointment.Meta
+SLOT_TAKEN_MESSAGE = "Это время только что заняли. Выберите другое."
+
 
 def get_available_slots(service, date, now=None):
     """Возвращает свободные временные слоты для услуги на дату.
