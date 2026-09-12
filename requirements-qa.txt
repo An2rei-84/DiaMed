@@ -1,0 +1,9 @@
+# QA-слой автотестов: E2E (Playwright) и API black-box
+# Ставится поверх requirements.txt: pip install -r requirements-qa.txt
+
+# E2E через браузер
+pytest-playwright==0.4.3
+playwright==1.62.0
+
+# API-тесты как чёрный ящик (HTTP-клиент)
+requests==2.34.2
