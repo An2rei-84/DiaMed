@@ -86,6 +86,48 @@ class TestAppointmentCreateAPI:
 
 
 @pytest.mark.django_db
+class TestInvalidPkAPI:
+    """Некорректные pk из пути — 404, а не 500 (нашёл фаззинг Schemathesis)."""
+
+    HUGE_PK = "2252903082365565796352"  # больше 2^63-1
+
+    def test_detail_huge_pk_404(self, auth_api_client):
+        """Вне-диапазонный pk в detail не роняет сервер."""
+        response = auth_api_client.get(f"{API_LIST}{self.HUGE_PK}/")
+
+        assert response.status_code == 404
+
+    def test_result_huge_pk_404(self, auth_api_client):
+        """Вне-диапазонный pk в result не роняет сервер."""
+        response = auth_api_client.get(f"{API_LIST}{self.HUGE_PK}/result/")
+
+        assert response.status_code == 404
+
+    def test_cancel_huge_pk_404(self, auth_api_client):
+        """Вне-диапазонный pk в cancel не роняет сервер."""
+        response = auth_api_client.post(f"{API_LIST}{self.HUGE_PK}/cancel/")
+
+        assert response.status_code == 404
+
+    def test_non_numeric_pk_404(self, auth_api_client):
+        """Нечисловой pk отсекается роутингом."""
+        response = auth_api_client.get(f"{API_LIST}not-a-number/")
+
+        assert response.status_code == 404
+
+    def test_create_huge_service_pk_400(self, auth_api_client, tomorrow):
+        """Вне-диапазонный pk услуги в теле запроса — 400, а не 500 (нашёл фаззинг)."""
+        for huge_pk in (2252903082365565796352, -130783583520423338817523080411217920):
+            response = auth_api_client.post(
+                API_LIST,
+                {"service": huge_pk, "date": str(tomorrow), "time": "10:00"},
+                format="json",
+            )
+
+            assert response.status_code == 400, huge_pk
+
+
+@pytest.mark.django_db
 class TestAppointmentRaceConditionAPI:
     """Двойная запись при гонке: UniqueConstraint в БД + IntegrityError → 400."""
 

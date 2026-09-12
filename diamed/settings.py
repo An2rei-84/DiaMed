@@ -195,7 +195,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ),
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "user": "120/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        # Через env поднимается для фаззинга Schemathesis, чтобы не упираться в лимиты
+        "anon": os.environ.get("API_ANON_THROTTLE_RATE", "60/min"),
+        "user": os.environ.get("API_USER_THROTTLE_RATE", "120/min"),
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -266,3 +270,11 @@ if os.environ.get("EMAIL_BACKEND", "console") == "smtp":
     EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# ==================== Telegram ====================
+
+# Токен бота от @BotFather; без токена отправка отключена (задачи молча пропускают TG)
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+# Имя бота для показа ссылки привязки в личном кабинете
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "diamed_bot")

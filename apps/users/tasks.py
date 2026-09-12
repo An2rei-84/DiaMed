@@ -8,7 +8,14 @@ from django.utils import timezone
 
 from celery import shared_task
 
-from .models import Appointment
+from .models import Appointment, UserProfile
+from .telegram import send_telegram_message
+
+
+def _telegram_chat_id(appointment):
+    """Возвращает chat_id Telegram пользователя записи, если тот привязан."""
+    profile = UserProfile.objects.filter(user=appointment.user).first()
+    return profile.telegram_chat_id if profile else None
 
 
 @shared_task
@@ -34,6 +41,14 @@ def send_appointment_confirmation(appointment_id):
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[appointment.user.email],
     )
+    chat_id = _telegram_chat_id(appointment)
+    if chat_id:
+        send_telegram_message(
+            chat_id,
+            f"✅ Запись на «{appointment.service.name}» создана: "
+            f"{appointment.date.strftime('%d.%m.%Y')} в {appointment.time.strftime('%H:%M')}. "
+            "Статус: ожидает подтверждения.",
+        )
     return f"Подтверждение отправлено на {appointment.user.email}"
 
 
@@ -41,7 +56,8 @@ def send_appointment_confirmation(appointment_id):
 def send_appointment_reminders():
     """Напоминает пациентам о приёмах, назначенных на завтра.
 
-    Запускается по расписанию (Celery Beat, ежедневно в 18:00).
+    Запускается по расписанию (Celery Beat, ежедневно в 18:00);
+    письма дублируются в Telegram для привязанных пользователей.
 
     Returns:
         str: количество отправленных напоминаний.
@@ -65,4 +81,11 @@ def send_appointment_reminders():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[appointment.user.email],
         )
+        chat_id = _telegram_chat_id(appointment)
+        if chat_id:
+            send_telegram_message(
+                chat_id,
+                f"⏰ Напоминание: «{appointment.service.name}» завтра в {appointment.time.strftime('%H:%M')}. "
+                "Не забудьте подготовку к процедуре.",
+            )
     return f"Отправлено напоминаний: {appointments.count()}"

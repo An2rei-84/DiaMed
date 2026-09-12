@@ -89,6 +89,23 @@ services:
       redis:
         condition: service_healthy
 
+  # Telegram-бот (long polling). Без TELEGRAM_BOT_TOKEN в .env контейнер
+  # стартует и завершается — бот просто отключён, остальные сервисы не трогает
+  telegram-bot:
+    image: ${DIAMED_IMAGE:?set DIAMED_IMAGE in .env}
+    container_name: diamed_telegram_bot
+    restart: unless-stopped
+    command: python manage.py telegram_bot
+    env_file:
+      - .env
+    environment:
+      <<: *web-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   static_volume:

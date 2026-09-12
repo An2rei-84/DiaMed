@@ -5,6 +5,7 @@ from datetime import datetime
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -34,6 +35,20 @@ class ServiceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "slug"
     pagination_class = None
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="slug",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                examples=[OpenApiExample("Диагностика", value="diagnostika")],
+            )
+        ]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Детали категории."""
+        return super().retrieve(request, *args, **kwargs)
+
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     """Медицинские услуги: список с фильтрами, поиском и сортировкой."""
@@ -51,6 +66,20 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
         """Список активных услуг (ответ кэшируется на 5 минут)."""
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="slug",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                examples=[OpenApiExample("Анализ крови", value="analiz-krovi")],
+            )
+        ]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Детали услуги."""
+        return super().retrieve(request, *args, **kwargs)
+
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     """Записи на приём текущего пользователя."""
@@ -58,6 +87,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsOwner)
     http_method_names = ["get", "post", "head", "options"]
     ordering_fields = ["date", "time", "status"]
+    # pk — не более 18 цифр: значения вне диапазона bigint (2^63-1) отсекаются
+    # роутингом и дают 404, иначе DB-адаптер падает OverflowError/DataError → 500
+    lookup_value_regex = "[0-9]{1,18}"
 
     def get_queryset(self):
         """Возвращает только записи текущего пользователя."""

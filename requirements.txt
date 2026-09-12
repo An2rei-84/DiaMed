@@ -26,6 +26,9 @@ redis==5.2.1
 # Отдача статики в продакшене
 whitenoise==6.8.2
 
+# Telegram-уведомления (Bot API)
+requests==2.34.2
+
 # Environment variables
 python-dotenv==1.0.0
 

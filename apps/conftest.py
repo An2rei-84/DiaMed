@@ -1,8 +1,9 @@
 """Общие фикстуры для тестов проекта."""
 
-from datetime import date, timedelta
+from datetime import time, timedelta
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 import pytest
 
@@ -21,8 +22,26 @@ def user_data():
 
 @pytest.fixture
 def tomorrow():
-    """Дата приёма для тестов: завтра."""
-    return date.today() + timedelta(days=1)
+    """Дата приёма для тестов: завтра.
+
+    timezone.localdate(), а не date.today(): задачи считают «завтра»
+    по TIME_ZONE (Europe/Moscow), фикстуры должны совпадать с ними.
+    """
+    return timezone.localdate() + timedelta(days=1)
+
+
+@pytest.fixture
+def appointment(db, user, sample_service, tomorrow):
+    """Тестовая запись на приём (завтра в 10:00, статус «Ожидает»)."""
+    from apps.users.models import Appointment
+
+    return Appointment.objects.create(
+        user=user,
+        service=sample_service,
+        date=tomorrow,
+        time=time(10, 0),
+        status="pending",
+    )
 
 
 @pytest.fixture

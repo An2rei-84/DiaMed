@@ -1,0 +1,13 @@
+# QA-слой автотестов: E2E (Playwright) и API black-box
+# Ставится поверх requirements.txt: pip install -r requirements-qa.txt
+
+# E2E через браузер
+pytest-playwright==0.4.3
+playwright==1.62.0
+
+# API-тесты: чёрный ящик и фаззинг OpenAPI
+allure-pytest==2.16.0
+
+# Schemathesis (фаззинг CLI `st run`) здесь НЕ установлен намеренно:
+# ему нужен pytest>=9, что конфликтует с пином проекта (pytest 7.4.3).
+# Ставится изолированно: pipx install schemathesis
