@@ -5,6 +5,7 @@ from datetime import datetime
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -34,6 +35,20 @@ class ServiceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "slug"
     pagination_class = None
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="slug",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                examples=[OpenApiExample("Диагностика", value="diagnostika")],
+            )
+        ]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Детали категории."""
+        return super().retrieve(request, *args, **kwargs)
+
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     """Медицинские услуги: список с фильтрами, поиском и сортировкой."""
@@ -50,6 +65,20 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     def list(self, request, *args, **kwargs):
         """Список активных услуг (ответ кэшируется на 5 минут)."""
         return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="slug",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                examples=[OpenApiExample("Анализ крови", value="analiz-krovi")],
+            )
+        ]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Детали услуги."""
+        return super().retrieve(request, *args, **kwargs)
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):

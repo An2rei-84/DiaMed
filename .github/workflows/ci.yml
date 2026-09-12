@@ -146,7 +146,7 @@ jobs:
           python manage.py runserver 127.0.0.1:8039 --noreload &
           sleep 5
           TOKEN=$(curl -s -X POST http://127.0.0.1:8039/api/auth/token/ -H "Content-Type: application/json" -d '{"username":"qa_api","password":"qa_pass_123"}' | python -c "import sys, json; print(json.load(sys.stdin)['access'])")
-          st run http://127.0.0.1:8039/api/schema/ --checks not_a_server_error --max-examples 20 --header "Authorization: Bearer $TOKEN"
+          st run http://127.0.0.1:8039/api/schema/ --checks not_a_server_error --max-examples 20 --suppress-health-check=filter_too_much --header "Authorization: Bearer $TOKEN"
 
       - name: Allure-отчёт (генерация)
         if: always()

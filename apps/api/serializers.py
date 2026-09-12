@@ -80,8 +80,31 @@ class AppointmentSerializer(serializers.ModelSerializer):
             return None
 
 
+class SafePrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    """PrimaryKeyRelatedField, отвергающий pk вне диапазона bigint.
+
+    Фаззинг (Schemathesis) подсовывает в тело запроса гигантские целые:
+    без ограничения они доходят до DB-адаптера и роняют запрос с
+    OverflowError → 500. Здесь мусор отсекается на уровне валидации.
+    """
+
+    MAX_PK = 10**18  # гарантированно внутри bigint (2^63-1); согласовано с lookup_value_regex во вью
+
+    def to_internal_value(self, data):
+        """Проверяет, что pk — целое в разумном диапазоне, до похода в БД."""
+        try:
+            value = int(data)
+        except (TypeError, ValueError):
+            self.fail("incorrect_type", data_type=type(data).__name__)
+        if not 0 < value <= self.MAX_PK:
+            self.fail("does_not_exist", pk_value=data)
+        return super().to_internal_value(data)
+
+
 class AppointmentCreateSerializer(serializers.ModelSerializer):
     """Создание записи на приём с проверкой свободных слотов."""
+
+    service = SafePrimaryKeyRelatedField(queryset=Service.objects.all())
 
     class Meta:
         """Настройки сериализатора."""

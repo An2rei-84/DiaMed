@@ -115,6 +115,17 @@ class TestInvalidPkAPI:
 
         assert response.status_code == 404
 
+    def test_create_huge_service_pk_400(self, auth_api_client, tomorrow):
+        """Вне-диапазонный pk услуги в теле запроса — 400, а не 500 (нашёл фаззинг)."""
+        for huge_pk in (2252903082365565796352, -130783583520423338817523080411217920):
+            response = auth_api_client.post(
+                API_LIST,
+                {"service": huge_pk, "date": str(tomorrow), "time": "10:00"},
+                format="json",
+            )
+
+            assert response.status_code == 400, huge_pk
+
 
 @pytest.mark.django_db
 class TestAppointmentRaceConditionAPI:
