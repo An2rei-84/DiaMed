@@ -259,6 +259,8 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/diamed
+            # Compose-файл всегда берём из main: при ошибке скачивания остаётся текущий
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.prod.yml -o docker-compose.yml || echo "compose sync failed, keeping current file"
             # Поддержка и нового (docker compose v2), и старого (docker-compose v1)
             if docker compose version >/dev/null 2>&1; then DC="docker compose"; else DC="docker-compose"; fi
             $DC pull
