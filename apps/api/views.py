@@ -19,6 +19,7 @@ from apps.users.models import Appointment, DiagnosticResult
 
 from .permissions import IsOwner
 from .serializers import (
+    MAX_PK,
     AppointmentCreateSerializer,
     AppointmentSerializer,
     AvailableSlotsSerializer,
@@ -28,9 +29,16 @@ from .serializers import (
 )
 from .services import get_available_slots
 
-# pk записи: в схеме объявлен целым числом, иначе drf-spectacular пишет "string",
-# фаззер генерирует нечисловой мусор и роутинг его отсекает
-ID_PATH_PARAM = OpenApiParameter(name="id", type=OpenApiTypes.INT, location=OpenApiParameter.PATH)
+# pk записи: в схеме объявлен целым числом с границами 0..MAX_PK-1.
+# Границы = lookup_value_regex ([0-9]{1,18}): без них hypothesis генерирует
+# гигантские и отрицательные числа, они отсекаются regex'ом URL, доля
+# отфильтрованных примеров растёт и фаззинг падает по health check
+# filter_too_much — не из-за бага API, а из-за врущей схемы.
+ID_PATH_PARAM = OpenApiParameter(
+    name="id",
+    type={"type": "integer", "minimum": 0, "maximum": MAX_PK - 1},
+    location=OpenApiParameter.PATH,
+)
 
 
 class ServiceCategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -151,8 +159,20 @@ class AvailableSlotsView(APIView):
 
     @extend_schema(
         parameters=[
-            OpenApiParameter(name="service", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
-            OpenApiParameter(name="date", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY),
+            OpenApiParameter(
+                name="service",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                # Пример — реальный slug из демо-данных: фаззер в Examples-фазе
+                # берёт его и попадает в ядро логики вместо 404
+                examples=[OpenApiExample("Анализ крови", value="analiz-krovi")],
+            ),
+            OpenApiParameter(
+                name="date",
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                examples=[OpenApiExample("Дата приёма", value="2027-01-01")],
+            ),
         ],
         responses=AvailableSlotsSerializer,
     )
