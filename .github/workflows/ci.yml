@@ -141,7 +141,10 @@ jobs:
 
       - name: Фаззинг Schemathesis по OpenAPI-схеме
         run: |
-          pipx install schemathesis
+          # Пин: 4.27.1+ превращает «Missing valid test data» из предупреждения
+          # в падающий health check (404 на несуществующих id/slug — это норма
+          # для фаззинга). Версии QA-инструментов обновляем осознанно.
+          pipx install schemathesis==4.27.0
           python manage.py migrate --noinput
           python manage.py qa_seed
           python manage.py runserver 127.0.0.1:8039 --noreload &
