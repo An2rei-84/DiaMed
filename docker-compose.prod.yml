@@ -16,7 +16,9 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-diamed}
       POSTGRES_USER: ${POSTGRES_USER:-diamed}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diamed123}
+      # Без запасного значения: если пароль не задан в .env на сервере,
+      # деплой падает сразу, а не поднимает базу с общеизвестным паролем
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
