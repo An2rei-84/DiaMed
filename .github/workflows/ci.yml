@@ -247,7 +247,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: http://144.124.249.130:8001
+      url: https://diamed.online
     steps:
       - name: Checkout кода
         uses: actions/checkout@v6
@@ -260,8 +260,9 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/diamed
-            # Compose-файл всегда берём из main: при ошибке скачивания остаётся текущий
+            # Compose и Caddyfile всегда берём из main: при ошибке скачивания остаются текущие
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.prod.yml -o docker-compose.yml || echo "compose sync failed, keeping current file"
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/Caddyfile -o Caddyfile || echo "Caddyfile sync failed, keeping current file"
             # Поддержка и нового (docker compose v2), и старого (docker-compose v1)
             if docker compose version >/dev/null 2>&1; then DC="docker compose"; else DC="docker-compose"; fi
             $DC pull
