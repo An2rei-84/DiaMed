@@ -1,12 +1,14 @@
 # DiaMed — сайт медицинского диагностического центра
 
+> 🔴 **Живое демо: [diamed.online](https://diamed.online)** · [Swagger UI](https://diamed.online/api/docs/) · [ReDoc](https://diamed.online/api/redoc/)
+
 [![CI/CD Pipeline](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/An2rei-84/DiaMed/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Django](https://img.shields.io/badge/django-4.2_LTS-green)
-![Unit%2Fintegration](https://img.shields.io/badge/tests_unit-166_passed-brightgreen)
+![Unit%2Fintegration](https://img.shields.io/badge/tests_unit-180_passed-brightgreen)
 ![API](https://img.shields.io/badge/tests_API_black--box-35_passed-brightgreen)
-![E2E](https://img.shields.io/badge/tests_E2E_Playwright-15_passed-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
+![E2E](https://img.shields.io/badge/tests_E2E_Playwright-16_passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 
 Полнофункциональный веб-сайт медицинского диагностического центра: каталог услуг, запись на приём
 с проверкой свободных слотов и защитой от двойной брони на уровне БД, личный кабинет пациента
@@ -26,6 +28,8 @@ API black-box (requests) и E2E (Playwright) с Allure-отчётами в CI.
   для привязанных пользователей — дублирование в **Telegram**
 - 💬 **Telegram-бот** — привязка аккаунта по персональному коду (`/start <код>`) через long polling
 - ⚡ **Кэширование** — Redis для списка услуг
+- 🛡 **Защита от спама и брутфорса** — rate limiting регистраций и входов по IP, honeypot в форме,
+  отдельный лимит на выдачу JWT; HTTPS с авто-сертификатами Let's Encrypt (Caddy)
 - 🔐 **Админ-панель** — управление услугами, записями, результатами и контентом
 - ✅ **Три слоя автотестов** — 166 unit/integration (покрытие 99%), 35 API black-box, 15 E2E;
   фаззинг OpenAPI-схемы (Schemathesis); Allure-отчёты в CI/CD

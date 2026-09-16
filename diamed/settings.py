@@ -21,6 +21,10 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 # Домены для CSRF при работе за HTTPS (например, https://diamed.example.com)
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
+# Django стоит за Caddy-реверс-прокси: оригинальный протокол приходит в заголовке.
+# Безопасно: наружу gunicorn не опубликован, заголовок ставит только Caddy.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # Application definition
 

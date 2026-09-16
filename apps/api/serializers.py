@@ -110,6 +110,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
             return None
 
 
+# Верхняя граница pk: гарантированно внутри bigint (2^63-1); согласована
+# с lookup_value_regex ([0-9]{1,18}) во вью
+MAX_PK = 10**18
+
+
 class SafePrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     """PrimaryKeyRelatedField, отвергающий pk вне диапазона bigint.
 
@@ -118,7 +123,7 @@ class SafePrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     OverflowError → 500. Здесь мусор отсекается на уровне валидации.
     """
 
-    MAX_PK = 10**18  # гарантированно внутри bigint (2^63-1); согласовано с lookup_value_regex во вью
+    MAX_PK = MAX_PK
 
     def to_internal_value(self, data):
         """Проверяет, что pk — целое в разумном диапазоне, до похода в БД."""

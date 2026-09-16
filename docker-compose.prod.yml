@@ -16,7 +16,9 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-diamed}
       POSTGRES_USER: ${POSTGRES_USER:-diamed}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diamed123}
+      # Без запасного значения: если пароль не задан в .env на сервере,
+      # деплой падает сразу, а не поднимает базу с общеизвестным паролем
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -48,8 +50,9 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      # 8001 снаружи: на сервере порт 8000 занят другим сервисом
-      - "8001:8000"
+      # Только localhost: наружу сайт отдаёт Caddy по HTTPS,
+      # напрямую в gunicorn с чужими заголовками попасть нельзя
+      - "127.0.0.1:8001:8000"
     env_file:
       - .env
     environment:
@@ -59,6 +62,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: diamed_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Сертификаты и состояние ACME переживают пересоздание контейнера
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
 
   celery:
     image: ${DIAMED_IMAGE:?set DIAMED_IMAGE in .env}
@@ -111,3 +129,5 @@ volumes:
   postgres_data:
   static_volume:
   media_volume:
+  caddy_data:
+  caddy_config:

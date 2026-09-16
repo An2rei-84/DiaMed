@@ -1,0 +1,13 @@
+# HTTPS-реверс-прокси сервера (см. сервис caddy в docker-compose.prod.yml).
+# Сертификаты Let's Encrypt Caddy выпускает и продлевает сам.
+
+# DiaMed — основной сайт
+diamed.online, www.diamed.online {
+	reverse_proxy web:8000
+	encode gzip
+}
+
+# Остальные имена и заход по голому IP — на основной сайт
+:80 {
+	redir https://diamed.online{uri} permanent
+}
