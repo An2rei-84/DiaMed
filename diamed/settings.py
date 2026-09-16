@@ -1,6 +1,7 @@
 """Настройки проекта DiaMed."""
 
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 
@@ -199,9 +200,40 @@ REST_FRAMEWORK = {
         # Через env поднимается для фаззинга Schemathesis, чтобы не упираться в лимиты
         "anon": os.environ.get("API_ANON_THROTTLE_RATE", "60/min"),
         "user": os.environ.get("API_USER_THROTTLE_RATE", "120/min"),
+        # Выдача JWT: плотнее общего anon-лимита — анти-брутфорс
+        "auth_token": os.environ.get("API_AUTH_TOKEN_THROTTLE_RATE", "30/min"),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+
+# ==================== Анти-спам веб-форм ====================
+
+
+def _parse_rate_limit(value):
+    """Разбирает «N/период» в (N, секунд): «5/hour» → (5, 3600), «10/15min» → (10, 900)."""
+    match = re.match(r"^(\d+)\s*/\s*(?:(\d+)\s*)?(second|minute|min|hour|day|[smhd])$", value.strip())
+    if not match:
+        raise ValueError(f"Неверный формат лимита: {value!r} (ожидается «5/hour», «10/15min», «30/min»)")
+    count, multiplier, unit = match.groups()
+    unit_seconds = {
+        "s": 1,
+        "m": 60,
+        "h": 3600,
+        "d": 86400,
+        "second": 1,
+        "min": 60,
+        "minute": 60,
+        "hour": 3600,
+        "day": 86400,
+    }
+    return int(count), int(multiplier or 1) * unit_seconds[unit]
+
+
+# Регистраций с одного IP (спам-боты регистрируют пачки аккаунтов)
+RATE_LIMIT_REGISTER = _parse_rate_limit(os.environ.get("RATE_LIMIT_REGISTER", "5/hour"))
+# Попыток входа с одного IP (брутфорс паролей)
+RATE_LIMIT_LOGIN = _parse_rate_limit(os.environ.get("RATE_LIMIT_LOGIN", "10/15min"))
 
 # JWT-аутентификация
 SIMPLE_JWT = {

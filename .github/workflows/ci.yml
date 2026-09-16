@@ -120,6 +120,7 @@ jobs:
       # Поднятые лимиты: фаззинг шлёт сотни запросов за минуты
       API_ANON_THROTTLE_RATE: "1000/min"
       API_USER_THROTTLE_RATE: "1000/min"
+      API_AUTH_TOKEN_THROTTLE_RATE: "1000/min"
     steps:
       - name: Checkout кода
         uses: actions/checkout@v6

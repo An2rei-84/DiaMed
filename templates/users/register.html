@@ -14,6 +14,11 @@
                         <form method="post">
                             {% csrf_token %}
 
+                            {# Honeypot: скрытое поле-ловушка для спам-ботов #}
+                            <div class="d-none" aria-hidden="true">
+                                {{ form.website }}
+                            </div>
+
                             <div class="mb-3">
                                 <label for="id_username" class="form-label">Имя пользователя</label>
                                 <input type="text"

@@ -19,6 +19,12 @@ class UserRegisterForm(UserCreationForm):
     last_name = forms.CharField(
         max_length=30, required=True, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Фамилия"})
     )
+    # Honeypot: скрытое поле-ловушка. Человек его не видит и не заполнит,
+    # спам-бот же заполняет всё подряд — по нему он и вычисляется.
+    website = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(attrs={"autocomplete": "off", "tabindex": "-1"}),
+    )
 
     class Meta:
         """Настройки формы."""

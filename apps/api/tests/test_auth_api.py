@@ -1,8 +1,11 @@
 """Тесты JWT-аутентификации API."""
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 
 import pytest
+from rest_framework.settings import api_settings
+from rest_framework.throttling import ScopedRateThrottle
 
 TOKEN_URL = "/api/auth/token/"
 REFRESH_URL = "/api/auth/token/refresh/"
@@ -56,3 +59,24 @@ class TestJWTAuth:
         response = client.get("/api/appointments/")
 
         assert response.status_code == 200
+
+
+@pytest.mark.django_db
+class TestTokenRateLimit:
+    """Анти-брутфорс на выдаче JWT (scope auth_token)."""
+
+    def test_token_endpoint_throttled(self, api_client, user, monkeypatch):
+        """Запросы сверх лимита на эндпоинт токена получают 429.
+
+        SimpleRateThrottle снимает THROTTLE_RATES в класс-атрибут при импорте,
+        поэтому override_settings(REST_FRAMEWORK=...) не подействует —
+        патчим атрибут троттла напрямую.
+        """
+        rates = {**api_settings.DEFAULT_THROTTLE_RATES, "auth_token": "2/min"}
+        monkeypatch.setattr(ScopedRateThrottle, "THROTTLE_RATES", rates)
+        cache.clear()
+        data = {"username": "testuser", "password": "testpass123"}
+
+        assert api_client.post(TOKEN_URL, data).status_code == 200
+        assert api_client.post(TOKEN_URL, data).status_code == 200
+        assert api_client.post(TOKEN_URL, data).status_code == 429
