@@ -7,23 +7,7 @@ diamed.online, www.diamed.online {
 	encode gzip
 }
 
-# Хабит-трекер (второй проект) — заход по IP на порт 80, как раньше через
-# его nginx (снесён): статика из его томов, динамика на его gunicorn.
-http://:80 {
-	# handle_path срезает префикс /static/ — как alias в nginx
-	handle_path /static/* {
-		root * /srv/habit-static
-		header Cache-Control "public, max-age=2592000, immutable"
-		file_server
-	}
-
-	handle_path /media/* {
-		root * /srv/habit-media
-		header Cache-Control "public, max-age=2592000"
-		file_server
-	}
-
-	handle {
-		reverse_proxy host.docker.internal:8000
-	}
+# Остальные имена и заход по голому IP — на основной сайт
+:80 {
+	redir https://diamed.online{uri} permanent
 }

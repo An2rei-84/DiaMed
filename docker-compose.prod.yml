@@ -67,9 +67,6 @@ services:
     image: caddy:2-alpine
     container_name: diamed_caddy
     restart: unless-stopped
-    # host.docker.internal: до gunicorn хабит-трекера на хосте (порт 8000)
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
       - "443:443"
@@ -78,9 +75,6 @@ services:
       # Сертификаты и состояние ACME переживают пересоздание контейнера
       - caddy_data:/data
       - caddy_config:/config
-      # Статика/медиа хабит-трекера: их раньше раздавал его снесённый nginx
-      - habit_static:/srv/habit-static:ro
-      - habit_media:/srv/habit-media:ro
     depends_on:
       - web
 
@@ -137,11 +131,3 @@ volumes:
   media_volume:
   caddy_data:
   caddy_config:
-  # Томами соседнего стека habit-tracker управляет его compose,
-  # отсюда только read-only доступ (названия фиксирует его проект)
-  habit_static:
-    external: true
-    name: habit-tracker_static_volume
-  habit_media:
-    external: true
-    name: habit-tracker_media_volume
