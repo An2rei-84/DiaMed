@@ -11,6 +11,16 @@ from .forms import AppointmentForm, UserLoginForm, UserProfileForm, UserRegister
 from .models import Appointment, UserProfile
 from .services import SLOT_TAKEN_MESSAGE
 from .tasks import send_appointment_confirmation
+from .throttling import is_rate_limited
+
+# Слова «через час»/«через 15 минут» в текстах не раскрываем: точные окна — подсказка ботам
+REGISTER_RATE_LIMITED_MESSAGE = "Слишком много попыток регистрации с этого адреса. Попробуйте позже."
+LOGIN_RATE_LIMITED_MESSAGE = "Слишком много попыток входа. Попробуйте позже."
+
+
+def _client_ip(request):
+    """IP клиента для лимитов: за прямым Gunicorn (без прокси) это REMOTE_ADDR."""
+    return request.META.get("REMOTE_ADDR", "unknown")
 
 
 def register(request):
@@ -18,7 +28,14 @@ def register(request):
 
     if request.method == "POST":
         form = UserRegisterForm(request.POST)
-        if form.is_valid():
+        if is_rate_limited(f"ratelimit:register:{_client_ip(request)}", *settings.RATE_LIMIT_REGISTER):
+            form.add_error(None, REGISTER_RATE_LIMITED_MESSAGE)
+        elif form.is_valid():
+            if form.cleaned_data.get("website"):
+                # Honeypot заполнен — бот. Отдаём «успех», пользователя не создаём:
+                # явная ошибка помогла бы боту адаптировать скрипт.
+                messages.success(request, "Регистрация успешна! Добро пожаловать.")
+                return redirect("core:index")
             try:
                 user = form.save()
             except IntegrityError:
@@ -44,7 +61,9 @@ def user_login(request):
 
     if request.method == "POST":
         form = UserLoginForm(request, data=request.POST)
-        if form.is_valid():
+        if is_rate_limited(f"ratelimit:login:{_client_ip(request)}", *settings.RATE_LIMIT_LOGIN):
+            form.add_error(None, LOGIN_RATE_LIMITED_MESSAGE)
+        elif form.is_valid():
             username = form.cleaned_data.get("username")
             password = form.cleaned_data.get("password")
             user = authenticate(username=username, password=password)

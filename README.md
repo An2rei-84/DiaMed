@@ -123,6 +123,13 @@ python manage.py runserver --settings=diamed.settings_local
 После привязки подтверждения записей и напоминания дублируются в Telegram.
 Без `TELEGRAM_BOT_TOKEN` отправка отключена (письма работают как обычно).
 
+## Защита от спама
+
+- **Rate limiting** регистраций и попыток входа по IP на кэше Django (Redis в проде,
+  без внешних зависимостей), плотный отдельный лимит на выдачу JWT-токенов.
+- **Honeypot**: скрытое поле в форме регистрации — заполненный ответ считается
+  ботом и молча отбивается с имитацией успеха.
+
 ## Переменные окружения
 
 | Переменная | По умолчанию | Описание |
@@ -140,6 +147,9 @@ python manage.py runserver --settings=diamed.settings_local
 | `TELEGRAM_BOT_TOKEN` | — | Токен бота от @BotFather (без него TG отключён) |
 | `TELEGRAM_BOT_USERNAME` | `diamed_bot` | Имя бота для ссылки привязки в кабинете |
 | `API_ANON_THROTTLE_RATE` / `API_USER_THROTTLE_RATE` | `60/min` / `120/min` | Лимиты запросов API |
+| `API_AUTH_TOKEN_THROTTLE_RATE` | `30/min` | Лимит выдачи JWT-токенов (анти-брутфорс) |
+| `RATE_LIMIT_REGISTER` | `5/hour` | Лимит регистраций с одного IP |
+| `RATE_LIMIT_LOGIN` | `10/15min` | Лимит попыток входа с одного IP |
 | `DIAMED_IMAGE` | — | Образ для серверного деплоя (только на сервере) |
 
 ## Модели данных

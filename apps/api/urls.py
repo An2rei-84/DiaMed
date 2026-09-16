@@ -4,7 +4,7 @@ from django.urls import include, path
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from . import views
 
@@ -15,7 +15,7 @@ router.register("appointments", views.AppointmentViewSet, basename="appointment"
 
 urlpatterns = [
     # JWT-аутентификация
-    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/token/", views.ThrottledTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # Явные маршруты до роутера: иначе router съедает "available-slots" как pk
     path(

@@ -10,7 +10,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.services.models import Service, ServiceCategory
 from apps.users.models import Appointment, DiagnosticResult
@@ -186,3 +188,14 @@ class AvailableSlotsView(APIView):
                 "available_slots": get_available_slots(service, date),
             }
         )
+
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    """Выдача JWT с отдельным плотным лимитом (анти-брутфорс).
+
+    ScopedRateThrottle с scope «auth_token» заменяет стандартные
+    Anon/User-троттлы: эндпоинт публичный, лимит должен считать IP.
+    """
+
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "auth_token"
